@@ -67,6 +67,10 @@ Stripped if the caller passes them (MCP injects its own):
 
 Stdout/stderr are UTF-8 decoded, token-like values redacted, and large dumps truncated.
 
+## Graphical views / empty Data Builder canvas
+
+`objects views create|update` with `GRAPHICALVIEWBUILDER` but **without** `editorSettings.uiModel` deploys and queries fine — the UI canvas stays empty. The runner inspects `--file-path` JSON and returns `warnings[]` when that happens. Fix: clone a complete `uiModel` from `objects views read` of a UI-built view (see `cli-knowledge/csn-structure` E.2.3a). Partial uiModels can cause join-mapping errors in the UI.
+
 ## Cache init
 
 If the CLI reports an outdated local cache, the runner runs `config cache init` once with the same secrets/host and retries the original command.

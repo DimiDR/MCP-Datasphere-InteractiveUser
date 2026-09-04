@@ -414,7 +414,7 @@ server.tool(
 
 server.tool(
   "datasphere_cli_run",
-  "Run ONE official datasphere CLI command via argv (design-time/admin). ONE OF ONLY TWO CLI tools — pass args as a string array after `datasphere`, e.g. [\"spaces\",\"list\"] or [\"objects\",\"views\",\"create\",\"--space\",\"X\",\"--file-path\",\"view.json\"]. Uses this MCP's Interactive token (temp secrets file); do not pass secrets/login. For rows use query_analytical_model / query_relational_entity. CSN shapes: cli-knowledge/csn-structure/; examples: cli-knowledge/examples/; commands/pitfalls: cli-knowledge/logic/. login/logout/config secrets reset are blocked.",
+  "Run ONE official datasphere CLI command via argv (design-time/admin). ONE OF ONLY TWO CLI tools — pass args as a string array after `datasphere`, e.g. [\"spaces\",\"list\"] or [\"objects\",\"views\",\"create\",\"--space\",\"X\",\"--file-path\",\"view.json\"]. Uses this MCP's Interactive token (temp secrets file); do not pass secrets/login. For rows use query_analytical_model / query_relational_entity. CSN shapes: cli-knowledge/csn-structure/; examples: cli-knowledge/examples/; commands/pitfalls: cli-knowledge/logic/. Graphical views need editorSettings.uiModel or the Data Builder canvas stays empty (tool returns warnings[]). login/logout/config secrets reset are blocked.",
   {
     args: z
       .array(z.string())

@@ -38,6 +38,7 @@ export type CliRunResult = {
   truncated: boolean;
   timed_out?: boolean;
   cache_init_retried?: boolean;
+  warnings?: string[];
 };
 
 export type CliStatus = {
@@ -354,6 +355,78 @@ function packResult(
   };
 }
 
+/** Flag Graphical View creates that will show an empty Data Builder canvas. */
+function graphicalViewUiModelWarnings(
+  cliArgs: string[],
+  cwd: string,
+): string[] {
+  const isViewsWrite =
+    cliArgs[0]?.toLowerCase() === "objects" &&
+    cliArgs[1]?.toLowerCase() === "views" &&
+    ["create", "update"].includes(cliArgs[2]?.toLowerCase() ?? "");
+  if (!isViewsWrite) return [];
+
+  let filePath: string | undefined;
+  for (let i = 0; i < cliArgs.length; i++) {
+    const a = cliArgs[i];
+    if (a === "--file-path" || a === "-f") {
+      filePath = cliArgs[i + 1];
+      break;
+    }
+    if (a.startsWith("--file-path=")) {
+      filePath = a.slice("--file-path=".length);
+      break;
+    }
+  }
+  if (!filePath) return [];
+
+  const abs = resolve(cwd, filePath);
+  if (!existsSync(abs)) {
+    return [
+      `Graphical-view check skipped: payload file not found at ${abs}.`,
+    ];
+  }
+
+  try {
+    const payload = JSON.parse(readFileSync(abs, "utf8")) as {
+      editorSettings?: Record<
+        string,
+        { editor?: { lastModifier?: string; default?: string }; uiModel?: unknown }
+      >;
+    };
+    const settings = payload.editorSettings;
+    if (!settings || typeof settings !== "object") {
+      return [
+        "Views create/update has no editorSettings. Data Builder Graphical canvas will be empty (query still runs). Clone editorSettings.uiModel from `objects views read` of a UI-built view, or omit GRAPHICALVIEWBUILDER.",
+      ];
+    }
+
+    const warnings: string[] = [];
+    for (const [viewName, cfg] of Object.entries(settings)) {
+      const editor = cfg?.editor;
+      const wantsGraphical =
+        editor?.lastModifier === "GRAPHICALVIEWBUILDER" ||
+        editor?.default === "GRAPHICALVIEWBUILDER";
+      const uiModel = cfg?.uiModel;
+      const hasUiModel =
+        typeof uiModel === "string"
+          ? uiModel.trim().length > 0
+          : uiModel != null && typeof uiModel === "object";
+
+      if (wantsGraphical && !hasUiModel) {
+        warnings.push(
+          `View "${viewName}" sets GRAPHICALVIEWBUILDER but has no editorSettings.uiModel. Deploy will succeed and OData queries work, but the Graphical View Builder canvas stays empty. Fix: clone a complete uiModel via \`objects views read\` from a UI-created join view (see cli-knowledge/csn-structure E.2.3a), adapt entity names, then recreate.`,
+        );
+      }
+    }
+    return warnings;
+  } catch (e) {
+    return [
+      `Could not inspect view payload for uiModel: ${e instanceof Error ? e.message : String(e)}`,
+    ];
+  }
+}
+
 export async function datasphereCliStatus(): Promise<CliStatus> {
   const notes: string[] = [];
   const entry = resolveDatasphereEntry();
@@ -448,6 +521,8 @@ export async function datasphereCliRun(options: {
 
   const secrets = await writeSecretsFile();
   try {
+    const preWarnings = graphicalViewUiModelWarnings(sanitized, cwd);
+
     let result = await spawnCli(entry, sanitized, {
       cwd,
       timeoutMs,
@@ -473,12 +548,16 @@ export async function datasphereCliRun(options: {
           secretsPath: secrets.path,
         });
       } else {
-        return packResult(sanitized, init, { cache_init_retried: true });
+        return packResult(sanitized, init, {
+          cache_init_retried: true,
+          warnings: preWarnings.length ? preWarnings : undefined,
+        });
       }
     }
 
     return packResult(sanitized, result, {
       cache_init_retried: cacheInitRetried || undefined,
+      warnings: preWarnings.length ? preWarnings : undefined,
     });
   } finally {
     secrets.cleanup();
