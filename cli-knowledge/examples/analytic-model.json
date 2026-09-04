@@ -1,0 +1,150 @@
+{
+  "definitions": {
+    "AM_ORDERS": {
+      "kind": "entity",
+      "@EndUserText.label": "Orders Analytic Model",
+      "elements": {
+        "ORDER_ID": {
+          "@EndUserText.label": "Order ID"
+        },
+        "CUSTOMER_NAME": {
+          "@EndUserText.label": "Customer Name"
+        },
+        "ORDER_DATE": {
+          "@EndUserText.label": "Order Date"
+        },
+        "AMOUNT": {
+          "@EndUserText.label": "Amount",
+          "@AnalyticsDetails.measureType": {
+            "#": "BASE"
+          }
+        }
+      },
+      "@ObjectModel.modelingPattern": {
+        "#": "ANALYTICAL_CUBE"
+      },
+      "@ObjectModel.supportedCapabilities": [
+        {
+          "#": "ANALYTICAL_PROVIDER"
+        },
+        {
+          "#": "_DWC_AM_EDITABLE_DIMENSION_NAMES"
+        }
+      ],
+      "@DataWarehouse.editorType": {
+        "#": "DWCQueryModelEditor"
+      },
+      "@DataWarehouse.hanaCatalog.viewType": {
+        "#": "CALCULATION_VIEW"
+      },
+      "query": {
+        "SELECT": {
+          "from": {
+            "ref": [
+              "AV_ORDERS_FACT"
+            ],
+            "as": "AV_ORDERS_FACT"
+          },
+          "columns": [
+            {
+              "ref": [
+                "AV_ORDERS_FACT",
+                "ORDER_ID"
+              ],
+              "as": "ORDER_ID"
+            },
+            {
+              "ref": [
+                "AV_ORDERS_FACT",
+                "CUSTOMER_NAME"
+              ],
+              "as": "CUSTOMER_NAME"
+            },
+            {
+              "ref": [
+                "AV_ORDERS_FACT",
+                "ORDER_DATE"
+              ],
+              "as": "ORDER_DATE"
+            },
+            {
+              "ref": [
+                "AV_ORDERS_FACT",
+                "AMOUNT"
+              ],
+              "as": "AMOUNT"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "businessLayerDefinitions": {
+    "AM_ORDERS": {
+      "identifier": {
+        "key": "AM_ORDERS"
+      },
+      "text": "Orders Analytic Model",
+      "sourceModel": {
+        "factSources": {
+          "AV_ORDERS_FACT": {
+            "text": "AV_ORDERS_FACT",
+            "dataEntity": {
+              "key": "AV_ORDERS_FACT"
+            }
+          }
+        },
+        "dimensionSources": {}
+      },
+      "exposedAssociations": {},
+      "attributes": {
+        "ORDER_ID": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "AV_ORDERS_FACT": {
+              "key": "ORDER_ID"
+            }
+          },
+          "text": "Order ID",
+          "duplicated": false
+        },
+        "CUSTOMER_NAME": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "AV_ORDERS_FACT": {
+              "key": "CUSTOMER_NAME"
+            }
+          },
+          "text": "Customer Name",
+          "duplicated": false
+        },
+        "ORDER_DATE": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "AV_ORDERS_FACT": {
+              "key": "ORDER_DATE"
+            }
+          },
+          "text": "Order Date",
+          "duplicated": false
+        }
+      },
+      "measures": {
+        "AMOUNT": {
+          "measureType": "AnalyticModelMeasureType.FactSourceMeasure",
+          "measureMapping": {
+            "AV_ORDERS_FACT": {
+              "key": "AMOUNT"
+            }
+          },
+          "text": "Amount",
+          "isAuxiliary": false
+        }
+      },
+      "version": "1.7.0",
+      "supportedCapabilities": {},
+      "crossCalculations": {},
+      "variables": {}
+    }
+  }
+}

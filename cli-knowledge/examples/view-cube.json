@@ -1,0 +1,87 @@
+{
+  "definitions": {
+    "AV_ORDERS_CUBE": {
+      "kind": "entity",
+      "@EndUserText.label": "Orders Cube View",
+      "@ObjectModel.modelingPattern": {
+        "#": "ANALYTICAL_CUBE"
+      },
+      "@ObjectModel.supportedCapabilities": [
+        {
+          "#": "ANALYTICAL_PROVIDER"
+        },
+        {
+          "#": "DATA_STRUCTURE"
+        }
+      ],
+      "@DataWarehouse.consumption.external": true,
+      "elements": {
+        "ORDER_ID": {
+          "key": true,
+          "notNull": true,
+          "type": "cds.String",
+          "length": 36,
+          "@EndUserText.label": "Order ID"
+        },
+        "CUSTOMER_NAME": {
+          "type": "cds.String",
+          "length": 100,
+          "@EndUserText.label": "Customer Name"
+        },
+        "ORDER_DATE": {
+          "type": "cds.Date",
+          "@EndUserText.label": "Order Date"
+        },
+        "AMOUNT": {
+          "type": "cds.Decimal",
+          "precision": 15,
+          "scale": 2,
+          "@EndUserText.label": "Amount",
+          "@AnalyticsDetails.measureType": {
+            "#": "BASE"
+          },
+          "@Aggregation.default": {
+            "#": "SUM"
+          }
+        }
+      },
+      "query": {
+        "SELECT": {
+          "from": {
+            "ref": [
+              "ZTEST_CLI_ORDERS"
+            ],
+            "as": "O"
+          },
+          "columns": [
+            {
+              "ref": [
+                "O",
+                "ORDER_ID"
+              ]
+            },
+            {
+              "ref": [
+                "O",
+                "CUSTOMER_NAME"
+              ]
+            },
+            {
+              "ref": [
+                "O",
+                "ORDER_DATE"
+              ]
+            },
+            {
+              "ref": [
+                "O",
+                "AMOUNT"
+              ]
+            }
+          ]
+        }
+      },
+      "@DataWarehouse.sqlEditor.query": "SELECT\n  \"O\".\"ORDER_ID\",\n  \"O\".\"CUSTOMER_NAME\",\n  \"O\".\"ORDER_DATE\",\n  \"O\".\"AMOUNT\"\nFROM \"ZTEST_CLI_ORDERS\" AS \"O\""
+    }
+  }
+}

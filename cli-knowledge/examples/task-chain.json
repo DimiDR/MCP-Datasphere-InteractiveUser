@@ -1,0 +1,60 @@
+{
+  "taskchains": {
+    "TC_ETL_DAILY": {
+      "kind": "sap.dwc.taskChain",
+      "@EndUserText.label": "ETL Daily",
+      "nodes": [
+        { "id": 0, "type": "START" },
+        {
+          "id": 1,
+          "type": "TASK",
+          "taskIdentifier": {
+            "applicationId": "TRANSFORMATION_FLOWS",
+            "activity": "EXECUTE",
+            "objectId": "TF_LOAD_DIM"
+          },
+          "ignoreError": false
+        },
+        {
+          "id": 2,
+          "type": "TASK",
+          "taskIdentifier": {
+            "applicationId": "TRANSFORMATION_FLOWS",
+            "activity": "EXECUTE",
+            "objectId": "TF_LOAD_FACT"
+          },
+          "ignoreError": false
+        },
+        {
+          "id": 3,
+          "type": "TASK",
+          "taskIdentifier": {
+            "applicationId": "VIEWS",
+            "activity": "PERSIST",
+            "objectId": "V_REPORTING"
+          },
+          "ignoreError": false
+        }
+      ],
+      "links": [
+        {
+          "id": 0,
+          "startNode": { "nodeId": 0, "statusRequired": "ANY" },
+          "endNode": { "nodeId": 1 }
+        },
+        {
+          "id": 1,
+          "startNode": { "nodeId": 1, "statusRequired": "COMPLETED" },
+          "endNode": { "nodeId": 2 }
+        },
+        {
+          "id": 2,
+          "startNode": { "nodeId": 2, "statusRequired": "COMPLETED" },
+          "endNode": { "nodeId": 3 }
+        }
+      ],
+      "options": { "layout": "VERTICAL" },
+      "schemaVersion": 2
+    }
+  }
+}

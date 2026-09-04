@@ -26,6 +26,7 @@ import {
   warmCache,
 } from "./datasphere.js";
 import { authStatus, clearToken, loginInteractive } from "./oauth.js";
+import { datasphereCliRun, datasphereCliStatus } from "./cli.js";
 
 function text(data: unknown) {
   return {
@@ -48,7 +49,7 @@ function err(e: unknown) {
 
 const server = new McpServer({
   name: "sap-datasphere-interactive-mcp",
-  version: "1.2.2",
+  version: "1.3.0",
 });
 
 const parametersSchema = z
@@ -390,6 +391,57 @@ server.tool(
           count,
         }),
       );
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+// ── Datasphere CLI (exactly two tools) ────────────────────────────────────
+
+server.tool(
+  "datasphere_cli_status",
+  "Check whether the official datasphere CLI (@sap/datasphere-cli) is installed and whether this MCP's Interactive Usage token can drive it. ONE OF ONLY TWO CLI tools — there is no MCP tool per CLI command. Use before datasphere_cli_run. Login with login_interactive (not datasphere login).",
+  {},
+  async () => {
+    try {
+      return text(await datasphereCliStatus());
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "datasphere_cli_run",
+  "Run ONE official datasphere CLI command via argv (design-time/admin). ONE OF ONLY TWO CLI tools — pass args as a string array after `datasphere`, e.g. [\"spaces\",\"list\"] or [\"objects\",\"views\",\"create\",\"--space\",\"X\",\"--file-path\",\"view.json\"]. Uses this MCP's Interactive token (temp secrets file); do not pass secrets/login. For rows use query_analytical_model / query_relational_entity. CSN shapes: cli-knowledge/csn-structure/; examples: cli-knowledge/examples/; commands/pitfalls: cli-knowledge/logic/. login/logout/config secrets reset are blocked.",
+  {
+    args: z
+      .array(z.string())
+      .min(1)
+      .describe("CLI tokens after `datasphere`, e.g. [\"spaces\",\"list\"]."),
+    working_directory: z
+      .string()
+      .optional()
+      .describe("Cwd for --file-path payloads (default: MCP project root)."),
+    timeout_seconds: z.number().int().min(30).max(600).optional(),
+  },
+  async ({ args, working_directory, timeout_seconds }) => {
+    try {
+      const result = await datasphereCliRun({
+        args,
+        workingDirectory: working_directory,
+        timeoutSeconds: timeout_seconds,
+      });
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+        isError: !result.ok,
+      };
     } catch (e) {
       return err(e);
     }

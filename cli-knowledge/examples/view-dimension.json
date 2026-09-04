@@ -1,0 +1,59 @@
+{
+  "definitions": {
+    "AV_CUSTOMERS_DIM": {
+      "kind": "entity",
+      "@EndUserText.label": "Customers Dimension View",
+      "@ObjectModel.modelingPattern": {
+        "#": "ANALYTICAL_DIMENSION"
+      },
+      "@ObjectModel.supportedCapabilities": [
+        {
+          "#": "ANALYTICAL_DIMENSION"
+        },
+        {
+          "#": "DATA_STRUCTURE"
+        }
+      ],
+      "@DataWarehouse.consumption.external": true,
+      "elements": {
+        "ID": {
+          "key": true,
+          "notNull": true,
+          "type": "cds.String",
+          "length": 100,
+          "@EndUserText.label": "ID"
+        },
+        "Name": {
+          "type": "cds.String",
+          "length": 100,
+          "@EndUserText.label": "Name"
+        }
+      },
+      "query": {
+        "SELECT": {
+          "from": {
+            "ref": [
+              "T1"
+            ],
+            "as": "T"
+          },
+          "columns": [
+            {
+              "ref": [
+                "T",
+                "ID"
+              ]
+            },
+            {
+              "ref": [
+                "T",
+                "Name"
+              ]
+            }
+          ]
+        }
+      },
+      "@DataWarehouse.sqlEditor.query": "SELECT\n  \"T\".\"ID\",\n  \"T\".\"Name\"\nFROM \"T1\" AS \"T\""
+    }
+  }
+}

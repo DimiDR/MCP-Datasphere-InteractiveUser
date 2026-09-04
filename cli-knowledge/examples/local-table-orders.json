@@ -1,0 +1,40 @@
+{
+  "definitions": {
+    "ZTEST_CLI_ORDERS": {
+      "kind": "entity",
+      "@EndUserText.label": "ZTest CLI Orders",
+      "@ObjectModel.modelingPattern": {
+        "#": "DATA_STRUCTURE"
+      },
+      "@ObjectModel.supportedCapabilities": [
+        {
+          "#": "DATA_STRUCTURE"
+        }
+      ],
+      "elements": {
+        "ORDER_ID": {
+          "key": true,
+          "notNull": true,
+          "type": "cds.String",
+          "length": 36,
+          "@EndUserText.label": "Order ID"
+        },
+        "CUSTOMER_NAME": {
+          "type": "cds.String",
+          "length": 100,
+          "@EndUserText.label": "Customer Name"
+        },
+        "ORDER_DATE": {
+          "type": "cds.Date",
+          "@EndUserText.label": "Order Date"
+        },
+        "AMOUNT": {
+          "type": "cds.Decimal",
+          "precision": 15,
+          "scale": 2,
+          "@EndUserText.label": "Amount"
+        }
+      }
+    }
+  }
+}

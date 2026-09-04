@@ -1,0 +1,24 @@
+{
+  "definitions": {
+    "T1": {
+      "kind": "entity",
+      "@EndUserText.label": "T1",
+      "@ObjectModel.modelingPattern": { "#": "DATA_STRUCTURE" },
+      "@ObjectModel.supportedCapabilities": [{ "#": "DATA_STRUCTURE" }],
+      "elements": {
+        "ID": {
+          "@EndUserText.label": "ID",
+          "type": "cds.String",
+          "length": 100,
+          "key": true,
+          "notNull": true
+        },
+        "Name": {
+          "@EndUserText.label": "Name",
+          "type": "cds.String",
+          "length": 100
+        }
+      }
+    }
+  }
+}

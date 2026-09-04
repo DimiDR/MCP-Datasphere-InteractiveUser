@@ -1,0 +1,1237 @@
+{
+  "definitions": {
+    "T1_AM_SALES": {
+      "kind": "entity",
+      "@EndUserText.label": "T1 Sales Analytic Model",
+      "elements": {
+        "VBELN": {
+          "@EndUserText.label": "Sales Document"
+        },
+        "POSNR": {
+          "@EndUserText.label": "Item"
+        },
+        "KUNNR": {
+          "@EndUserText.label": "Customer Number",
+          "@ObjectModel.foreignKey.association": {
+            "=": "_CUSTOMER∞0"
+          }
+        },
+        "CUSTOMER_NAME": {
+          "@EndUserText.label": "Customer Name"
+        },
+        "CUSTOMER_SEGMENT": {
+          "@EndUserText.label": "Customer Segment"
+        },
+        "LEGAL_FORM": {
+          "@EndUserText.label": "Legal Form"
+        },
+        "INDUSTRY_CODE": {
+          "@EndUserText.label": "Industry Code"
+        },
+        "VKORG": {
+          "@EndUserText.label": "Sales Organization",
+          "@ObjectModel.foreignKey.association": {
+            "=": "_SALES_ORG∞2"
+          }
+        },
+        "SALES_ORG_NAME": {
+          "@EndUserText.label": "Sales Organization Name"
+        },
+        "REGION_GROUP": {
+          "@EndUserText.label": "Region Group"
+        },
+        "ORG_COUNTRY": {
+          "@EndUserText.label": "Organization Country"
+        },
+        "MATNR": {
+          "@EndUserText.label": "Material Number",
+          "@ObjectModel.foreignKey.association": {
+            "=": "_MATERIAL∞1"
+          }
+        },
+        "MATERIAL_TEXT": {
+          "@EndUserText.label": "Material Description"
+        },
+        "MATERIAL_GROUP": {
+          "@EndUserText.label": "Material Group"
+        },
+        "MATERIAL_GROUP_TEXT": {
+          "@EndUserText.label": "Material Group Description"
+        },
+        "PRODUCT_LINE": {
+          "@EndUserText.label": "Product Line"
+        },
+        "BASE_UOM": {
+          "@EndUserText.label": "Base Unit of Measure"
+        },
+        "DOC_DATE": {
+          "@EndUserText.label": "Document Date"
+        },
+        "DOC_TYPE": {
+          "@EndUserText.label": "Sales Document Type"
+        },
+        "DOC_TYPE_TEXT": {
+          "@EndUserText.label": "Sales Document Type Description"
+        },
+        "CAL_YEAR": {
+          "@EndUserText.label": "Calendar Year"
+        },
+        "CAL_MONTH": {
+          "@EndUserText.label": "Calendar Month"
+        },
+        "CAL_QUARTER": {
+          "@EndUserText.label": "Calendar Quarter"
+        },
+        "CAL_YEARMONTH": {
+          "@EndUserText.label": "Calendar Year/Month"
+        },
+        "ORDER_QTY": {
+          "@EndUserText.label": "Order Quantity",
+          "@AnalyticsDetails.measureType": {
+            "#": "BASE"
+          }
+        },
+        "SALES_UNIT": {
+          "@EndUserText.label": "Sales Unit"
+        },
+        "NET_AMOUNT": {
+          "@EndUserText.label": "Net Value",
+          "@AnalyticsDetails.measureType": {
+            "#": "BASE"
+          }
+        },
+        "UNIT_PRICE": {
+          "@EndUserText.label": "Unit Price",
+          "@AnalyticsDetails.measureType": {
+            "#": "BASE"
+          }
+        },
+        "CURRENCY": {
+          "@EndUserText.label": "Currency"
+        },
+        "FX_RATE_EUR": {
+          "@EndUserText.label": "FX Rate to EUR"
+        },
+        "NET_AMOUNT_EUR": {
+          "@EndUserText.label": "Net Value (EUR)",
+          "@AnalyticsDetails.measureType": {
+            "#": "BASE"
+          }
+        },
+        "DOC_NET_TOTAL": {
+          "@EndUserText.label": "Document Net Total"
+        },
+        "DOC_ITEM_COUNT": {
+          "@EndUserText.label": "Items per Document"
+        },
+        "ITEM_SHARE_PCT": {
+          "@EndUserText.label": "Item Share of Document (%)",
+          "@AnalyticsDetails.measureType": {
+            "#": "BASE"
+          }
+        },
+        "ABC_CLASS": {
+          "@EndUserText.label": "ABC Class"
+        },
+        "ORDER_SIZE_CLASS": {
+          "@EndUserText.label": "Order Size Class"
+        },
+        "DQ_SCORE": {
+          "@EndUserText.label": "Data Quality Score",
+          "@AnalyticsDetails.measureType": {
+            "#": "BASE"
+          }
+        },
+        "DQ_HAS_ISSUE": {
+          "@EndUserText.label": "DQ Flag Has Issue",
+          "@AnalyticsDetails.measureType": {
+            "#": "BASE"
+          }
+        },
+        "SRC_SYSTEM": {
+          "@EndUserText.label": "Source System"
+        },
+        "LOAD_TIMESTAMP": {
+          "@EndUserText.label": "Load Timestamp"
+        },
+        "_CUSTOMER∞0": {
+          "type": "cds.Association",
+          "on": [
+            {
+              "ref": [
+                "KUNNR"
+              ]
+            },
+            "=",
+            {
+              "ref": [
+                "_CUSTOMER∞0",
+                "KUNNR"
+              ]
+            }
+          ],
+          "target": "T1_AV_CUSTOMER_DIM",
+          "@EndUserText.label": "T1 Customer Dimension"
+        },
+        "COUNTRY": {
+          "@EndUserText.label": "Country",
+          "@Analytics.navigationAttributeRef": [
+            "_CUSTOMER∞0",
+            "COUNTRY"
+          ]
+        },
+        "CITY": {
+          "@EndUserText.label": "City",
+          "@Analytics.navigationAttributeRef": [
+            "_CUSTOMER∞0",
+            "CITY"
+          ]
+        },
+        "REGION_CODE": {
+          "@EndUserText.label": "Region",
+          "@Analytics.navigationAttributeRef": [
+            "_CUSTOMER∞0",
+            "REGION_CODE"
+          ]
+        },
+        "DQ_MISSING_COUNTRY": {
+          "@EndUserText.label": "DQ Flag Missing Country",
+          "@Analytics.navigationAttributeRef": [
+            "_CUSTOMER∞0",
+            "DQ_MISSING_COUNTRY"
+          ]
+        },
+        "DQ_MISSING_NAME": {
+          "@EndUserText.label": "DQ Flag Missing Name",
+          "@Analytics.navigationAttributeRef": [
+            "_CUSTOMER∞0",
+            "DQ_MISSING_NAME"
+          ]
+        },
+        "_MATERIAL∞1": {
+          "type": "cds.Association",
+          "on": [
+            {
+              "ref": [
+                "MATNR"
+              ]
+            },
+            "=",
+            {
+              "ref": [
+                "_MATERIAL∞1",
+                "MATNR"
+              ]
+            }
+          ],
+          "target": "T1_AV_MATERIAL_DIM",
+          "@EndUserText.label": "T1 Material Dimension"
+        },
+        "MATERIAL_TYPE": {
+          "@EndUserText.label": "Material Type",
+          "@Analytics.navigationAttributeRef": [
+            "_MATERIAL∞1",
+            "MATERIAL_TYPE"
+          ]
+        },
+        "DQ_MISSING_GROUP": {
+          "@EndUserText.label": "DQ Flag Missing Material Group",
+          "@Analytics.navigationAttributeRef": [
+            "_MATERIAL∞1",
+            "DQ_MISSING_GROUP"
+          ]
+        },
+        "_SALES_ORG∞2": {
+          "type": "cds.Association",
+          "on": [
+            {
+              "ref": [
+                "VKORG"
+              ]
+            },
+            "=",
+            {
+              "ref": [
+                "_SALES_ORG∞2",
+                "VKORG"
+              ]
+            }
+          ],
+          "target": "T1_AV_SALES_ORG_DIM",
+          "@EndUserText.label": "T1 Sales Organization Dimension"
+        },
+        "ORG_CURRENCY": {
+          "@EndUserText.label": "Organization Currency",
+          "@Analytics.navigationAttributeRef": [
+            "_SALES_ORG∞2",
+            "ORG_CURRENCY"
+          ]
+        }
+      },
+      "@ObjectModel.modelingPattern": {
+        "#": "ANALYTICAL_CUBE"
+      },
+      "@ObjectModel.supportedCapabilities": [
+        {
+          "#": "ANALYTICAL_PROVIDER"
+        },
+        {
+          "#": "_DWC_AM_EDITABLE_DIMENSION_NAMES"
+        }
+      ],
+      "@DataWarehouse.editorType": {
+        "#": "DWCQueryModelEditor"
+      },
+      "@DataWarehouse.hanaCatalog.viewType": {
+        "#": "CALCULATION_VIEW"
+      },
+      "query": {
+        "SELECT": {
+          "from": {
+            "ref": [
+              "T1_AV_SALES_FACT"
+            ],
+            "as": "T1_AV_SALES_FACT"
+          },
+          "columns": [
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "VBELN"
+              ],
+              "as": "VBELN"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "POSNR"
+              ],
+              "as": "POSNR"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "KUNNR"
+              ],
+              "as": "KUNNR"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "CUSTOMER_NAME"
+              ],
+              "as": "CUSTOMER_NAME"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "CUSTOMER_SEGMENT"
+              ],
+              "as": "CUSTOMER_SEGMENT"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "LEGAL_FORM"
+              ],
+              "as": "LEGAL_FORM"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "INDUSTRY_CODE"
+              ],
+              "as": "INDUSTRY_CODE"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "VKORG"
+              ],
+              "as": "VKORG"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "SALES_ORG_NAME"
+              ],
+              "as": "SALES_ORG_NAME"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "REGION_GROUP"
+              ],
+              "as": "REGION_GROUP"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "ORG_COUNTRY"
+              ],
+              "as": "ORG_COUNTRY"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "MATNR"
+              ],
+              "as": "MATNR"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "MATERIAL_TEXT"
+              ],
+              "as": "MATERIAL_TEXT"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "MATERIAL_GROUP"
+              ],
+              "as": "MATERIAL_GROUP"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "MATERIAL_GROUP_TEXT"
+              ],
+              "as": "MATERIAL_GROUP_TEXT"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "PRODUCT_LINE"
+              ],
+              "as": "PRODUCT_LINE"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "BASE_UOM"
+              ],
+              "as": "BASE_UOM"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "DOC_DATE"
+              ],
+              "as": "DOC_DATE"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "DOC_TYPE"
+              ],
+              "as": "DOC_TYPE"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "DOC_TYPE_TEXT"
+              ],
+              "as": "DOC_TYPE_TEXT"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "CAL_YEAR"
+              ],
+              "as": "CAL_YEAR"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "CAL_MONTH"
+              ],
+              "as": "CAL_MONTH"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "CAL_QUARTER"
+              ],
+              "as": "CAL_QUARTER"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "CAL_YEARMONTH"
+              ],
+              "as": "CAL_YEARMONTH"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "ORDER_QTY"
+              ],
+              "as": "ORDER_QTY"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "SALES_UNIT"
+              ],
+              "as": "SALES_UNIT"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "NET_AMOUNT"
+              ],
+              "as": "NET_AMOUNT"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "UNIT_PRICE"
+              ],
+              "as": "UNIT_PRICE"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "CURRENCY"
+              ],
+              "as": "CURRENCY"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "FX_RATE_EUR"
+              ],
+              "as": "FX_RATE_EUR"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "NET_AMOUNT_EUR"
+              ],
+              "as": "NET_AMOUNT_EUR"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "DOC_NET_TOTAL"
+              ],
+              "as": "DOC_NET_TOTAL"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "DOC_ITEM_COUNT"
+              ],
+              "as": "DOC_ITEM_COUNT"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "ITEM_SHARE_PCT"
+              ],
+              "as": "ITEM_SHARE_PCT"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "ABC_CLASS"
+              ],
+              "as": "ABC_CLASS"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "ORDER_SIZE_CLASS"
+              ],
+              "as": "ORDER_SIZE_CLASS"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "DQ_SCORE"
+              ],
+              "as": "DQ_SCORE"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "DQ_HAS_ISSUE"
+              ],
+              "as": "DQ_HAS_ISSUE"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "SRC_SYSTEM"
+              ],
+              "as": "SRC_SYSTEM"
+            },
+            {
+              "ref": [
+                "T1_AV_SALES_FACT",
+                "LOAD_TIMESTAMP"
+              ],
+              "as": "LOAD_TIMESTAMP"
+            },
+            {
+              "ref": [
+                "_CUSTOMER∞0"
+              ]
+            },
+            {
+              "ref": [
+                "_CUSTOMER∞0",
+                "COUNTRY"
+              ],
+              "as": "COUNTRY"
+            },
+            {
+              "ref": [
+                "_CUSTOMER∞0",
+                "CITY"
+              ],
+              "as": "CITY"
+            },
+            {
+              "ref": [
+                "_CUSTOMER∞0",
+                "REGION_CODE"
+              ],
+              "as": "REGION_CODE"
+            },
+            {
+              "ref": [
+                "_CUSTOMER∞0",
+                "DQ_MISSING_COUNTRY"
+              ],
+              "as": "DQ_MISSING_COUNTRY"
+            },
+            {
+              "ref": [
+                "_CUSTOMER∞0",
+                "DQ_MISSING_NAME"
+              ],
+              "as": "DQ_MISSING_NAME"
+            },
+            {
+              "ref": [
+                "_MATERIAL∞1"
+              ]
+            },
+            {
+              "ref": [
+                "_MATERIAL∞1",
+                "MATERIAL_TYPE"
+              ],
+              "as": "MATERIAL_TYPE"
+            },
+            {
+              "ref": [
+                "_MATERIAL∞1",
+                "DQ_MISSING_GROUP"
+              ],
+              "as": "DQ_MISSING_GROUP"
+            },
+            {
+              "ref": [
+                "_SALES_ORG∞2"
+              ]
+            },
+            {
+              "ref": [
+                "_SALES_ORG∞2",
+                "ORG_CURRENCY"
+              ],
+              "as": "ORG_CURRENCY"
+            }
+          ],
+          "mixin": {
+            "_CUSTOMER∞0": {
+              "type": "cds.Association",
+              "on": [
+                {
+                  "ref": [
+                    "$projection",
+                    "KUNNR"
+                  ]
+                },
+                "=",
+                {
+                  "ref": [
+                    "_CUSTOMER∞0",
+                    "KUNNR"
+                  ]
+                }
+              ],
+              "target": "T1_AV_CUSTOMER_DIM",
+              "@EndUserText.label": "T1 Customer Dimension"
+            },
+            "_MATERIAL∞1": {
+              "type": "cds.Association",
+              "on": [
+                {
+                  "ref": [
+                    "$projection",
+                    "MATNR"
+                  ]
+                },
+                "=",
+                {
+                  "ref": [
+                    "_MATERIAL∞1",
+                    "MATNR"
+                  ]
+                }
+              ],
+              "target": "T1_AV_MATERIAL_DIM",
+              "@EndUserText.label": "T1 Material Dimension"
+            },
+            "_SALES_ORG∞2": {
+              "type": "cds.Association",
+              "on": [
+                {
+                  "ref": [
+                    "$projection",
+                    "VKORG"
+                  ]
+                },
+                "=",
+                {
+                  "ref": [
+                    "_SALES_ORG∞2",
+                    "VKORG"
+                  ]
+                }
+              ],
+              "target": "T1_AV_SALES_ORG_DIM",
+              "@EndUserText.label": "T1 Sales Organization Dimension"
+            }
+          }
+        }
+      }
+    }
+  },
+  "businessLayerDefinitions": {
+    "T1_AM_SALES": {
+      "identifier": {
+        "key": "T1_AM_SALES"
+      },
+      "text": "T1 Sales Analytic Model",
+      "sourceModel": {
+        "factSources": {
+          "T1_AV_SALES_FACT": {
+            "text": "T1_AV_SALES_FACT",
+            "dataEntity": {
+              "key": "T1_AV_SALES_FACT"
+            }
+          }
+        },
+        "dimensionSources": {
+          "0": {
+            "text": "KUNNR",
+            "dataEntity": {
+              "key": "T1_AV_CUSTOMER_DIM"
+            },
+            "associationContexts": [
+              {
+                "sourceKey": "T1_AV_SALES_FACT",
+                "sourceType": "AnalyticModelSourceType.Fact",
+                "associationSteps": [
+                  "_CUSTOMER"
+                ]
+              }
+            ]
+          },
+          "1": {
+            "text": "MATNR",
+            "dataEntity": {
+              "key": "T1_AV_MATERIAL_DIM"
+            },
+            "associationContexts": [
+              {
+                "sourceKey": "T1_AV_SALES_FACT",
+                "sourceType": "AnalyticModelSourceType.Fact",
+                "associationSteps": [
+                  "_MATERIAL"
+                ]
+              }
+            ]
+          },
+          "2": {
+            "text": "VKORG",
+            "dataEntity": {
+              "key": "T1_AV_SALES_ORG_DIM"
+            },
+            "associationContexts": [
+              {
+                "sourceKey": "T1_AV_SALES_FACT",
+                "sourceType": "AnalyticModelSourceType.Fact",
+                "associationSteps": [
+                  "_SALES_ORG"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "exposedAssociations": {},
+      "attributes": {
+        "VBELN": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "VBELN"
+            }
+          },
+          "text": "Sales Document",
+          "duplicated": false
+        },
+        "POSNR": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "POSNR"
+            }
+          },
+          "text": "Item",
+          "duplicated": false
+        },
+        "KUNNR": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "KUNNR"
+            }
+          },
+          "text": "Customer Number",
+          "duplicated": false
+        },
+        "CUSTOMER_NAME": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "CUSTOMER_NAME"
+            }
+          },
+          "text": "Customer Name",
+          "duplicated": false
+        },
+        "CUSTOMER_SEGMENT": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "CUSTOMER_SEGMENT"
+            }
+          },
+          "text": "Customer Segment",
+          "duplicated": false
+        },
+        "LEGAL_FORM": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "LEGAL_FORM"
+            }
+          },
+          "text": "Legal Form",
+          "duplicated": false
+        },
+        "INDUSTRY_CODE": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "INDUSTRY_CODE"
+            }
+          },
+          "text": "Industry Code",
+          "duplicated": false
+        },
+        "VKORG": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "VKORG"
+            }
+          },
+          "text": "Sales Organization",
+          "duplicated": false
+        },
+        "SALES_ORG_NAME": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "SALES_ORG_NAME"
+            }
+          },
+          "text": "Sales Organization Name",
+          "duplicated": false
+        },
+        "REGION_GROUP": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "REGION_GROUP"
+            }
+          },
+          "text": "Region Group",
+          "duplicated": false
+        },
+        "ORG_COUNTRY": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "ORG_COUNTRY"
+            }
+          },
+          "text": "Organization Country",
+          "duplicated": false
+        },
+        "MATNR": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "MATNR"
+            }
+          },
+          "text": "Material Number",
+          "duplicated": false
+        },
+        "MATERIAL_TEXT": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "MATERIAL_TEXT"
+            }
+          },
+          "text": "Material Description",
+          "duplicated": false
+        },
+        "MATERIAL_GROUP": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "MATERIAL_GROUP"
+            }
+          },
+          "text": "Material Group",
+          "duplicated": false
+        },
+        "MATERIAL_GROUP_TEXT": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "MATERIAL_GROUP_TEXT"
+            }
+          },
+          "text": "Material Group Description",
+          "duplicated": false
+        },
+        "PRODUCT_LINE": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "PRODUCT_LINE"
+            }
+          },
+          "text": "Product Line",
+          "duplicated": false
+        },
+        "BASE_UOM": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "BASE_UOM"
+            }
+          },
+          "text": "Base Unit of Measure",
+          "duplicated": false
+        },
+        "DOC_DATE": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "DOC_DATE"
+            }
+          },
+          "text": "Document Date",
+          "duplicated": false
+        },
+        "DOC_TYPE": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "DOC_TYPE"
+            }
+          },
+          "text": "Sales Document Type",
+          "duplicated": false
+        },
+        "DOC_TYPE_TEXT": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "DOC_TYPE_TEXT"
+            }
+          },
+          "text": "Sales Document Type Description",
+          "duplicated": false
+        },
+        "CAL_YEAR": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "CAL_YEAR"
+            }
+          },
+          "text": "Calendar Year",
+          "duplicated": false
+        },
+        "CAL_MONTH": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "CAL_MONTH"
+            }
+          },
+          "text": "Calendar Month",
+          "duplicated": false
+        },
+        "CAL_QUARTER": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "CAL_QUARTER"
+            }
+          },
+          "text": "Calendar Quarter",
+          "duplicated": false
+        },
+        "CAL_YEARMONTH": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "CAL_YEARMONTH"
+            }
+          },
+          "text": "Calendar Year/Month",
+          "duplicated": false
+        },
+        "SALES_UNIT": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "SALES_UNIT"
+            }
+          },
+          "text": "Sales Unit",
+          "duplicated": false
+        },
+        "CURRENCY": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "CURRENCY"
+            }
+          },
+          "text": "Currency",
+          "duplicated": false
+        },
+        "FX_RATE_EUR": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "FX_RATE_EUR"
+            }
+          },
+          "text": "FX Rate to EUR",
+          "duplicated": false
+        },
+        "DOC_NET_TOTAL": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "DOC_NET_TOTAL"
+            }
+          },
+          "text": "Document Net Total",
+          "duplicated": false
+        },
+        "DOC_ITEM_COUNT": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "DOC_ITEM_COUNT"
+            }
+          },
+          "text": "Items per Document",
+          "duplicated": false
+        },
+        "ABC_CLASS": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "ABC_CLASS"
+            }
+          },
+          "text": "ABC Class",
+          "duplicated": false
+        },
+        "ORDER_SIZE_CLASS": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "ORDER_SIZE_CLASS"
+            }
+          },
+          "text": "Order Size Class",
+          "duplicated": false
+        },
+        "SRC_SYSTEM": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "SRC_SYSTEM"
+            }
+          },
+          "text": "Source System",
+          "duplicated": false
+        },
+        "LOAD_TIMESTAMP": {
+          "attributeType": "AnalyticModelAttributeType.FactSourceAttribute",
+          "attributeMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "LOAD_TIMESTAMP"
+            }
+          },
+          "text": "Load Timestamp",
+          "duplicated": false
+        },
+        "COUNTRY": {
+          "attributeType": "AnalyticModelAttributeType.DimensionSourceAttribute",
+          "sourceKey": "0",
+          "key": "COUNTRY",
+          "text": "Country"
+        },
+        "CITY": {
+          "attributeType": "AnalyticModelAttributeType.DimensionSourceAttribute",
+          "sourceKey": "0",
+          "key": "CITY",
+          "text": "City"
+        },
+        "REGION_CODE": {
+          "attributeType": "AnalyticModelAttributeType.DimensionSourceAttribute",
+          "sourceKey": "0",
+          "key": "REGION_CODE",
+          "text": "Region"
+        },
+        "DQ_MISSING_COUNTRY": {
+          "attributeType": "AnalyticModelAttributeType.DimensionSourceAttribute",
+          "sourceKey": "0",
+          "key": "DQ_MISSING_COUNTRY",
+          "text": "DQ Flag Missing Country"
+        },
+        "DQ_MISSING_NAME": {
+          "attributeType": "AnalyticModelAttributeType.DimensionSourceAttribute",
+          "sourceKey": "0",
+          "key": "DQ_MISSING_NAME",
+          "text": "DQ Flag Missing Name"
+        },
+        "MATERIAL_TYPE": {
+          "attributeType": "AnalyticModelAttributeType.DimensionSourceAttribute",
+          "sourceKey": "1",
+          "key": "MATERIAL_TYPE",
+          "text": "Material Type"
+        },
+        "DQ_MISSING_GROUP": {
+          "attributeType": "AnalyticModelAttributeType.DimensionSourceAttribute",
+          "sourceKey": "1",
+          "key": "DQ_MISSING_GROUP",
+          "text": "DQ Flag Missing Material Group"
+        },
+        "ORG_CURRENCY": {
+          "attributeType": "AnalyticModelAttributeType.DimensionSourceAttribute",
+          "sourceKey": "2",
+          "key": "ORG_CURRENCY",
+          "text": "Organization Currency"
+        }
+      },
+      "measures": {
+        "ORDER_QTY": {
+          "measureType": "AnalyticModelMeasureType.FactSourceMeasure",
+          "measureMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "ORDER_QTY"
+            }
+          },
+          "text": "Order Quantity",
+          "isAuxiliary": false
+        },
+        "NET_AMOUNT": {
+          "measureType": "AnalyticModelMeasureType.FactSourceMeasure",
+          "measureMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "NET_AMOUNT"
+            }
+          },
+          "text": "Net Value",
+          "isAuxiliary": false
+        },
+        "UNIT_PRICE": {
+          "measureType": "AnalyticModelMeasureType.FactSourceMeasure",
+          "measureMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "UNIT_PRICE"
+            }
+          },
+          "text": "Unit Price",
+          "isAuxiliary": false
+        },
+        "NET_AMOUNT_EUR": {
+          "measureType": "AnalyticModelMeasureType.FactSourceMeasure",
+          "measureMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "NET_AMOUNT_EUR"
+            }
+          },
+          "text": "Net Value (EUR)",
+          "isAuxiliary": false
+        },
+        "ITEM_SHARE_PCT": {
+          "measureType": "AnalyticModelMeasureType.FactSourceMeasure",
+          "measureMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "ITEM_SHARE_PCT"
+            }
+          },
+          "text": "Item Share of Document (%)",
+          "isAuxiliary": false
+        },
+        "DQ_SCORE": {
+          "measureType": "AnalyticModelMeasureType.FactSourceMeasure",
+          "measureMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "DQ_SCORE"
+            }
+          },
+          "text": "Data Quality Score",
+          "isAuxiliary": false
+        },
+        "DQ_HAS_ISSUE": {
+          "measureType": "AnalyticModelMeasureType.FactSourceMeasure",
+          "measureMapping": {
+            "T1_AV_SALES_FACT": {
+              "key": "DQ_HAS_ISSUE"
+            }
+          },
+          "text": "DQ Flag Has Issue",
+          "isAuxiliary": false
+        }
+      },
+      "version": "1.7.0",
+      "supportedCapabilities": {},
+      "crossCalculations": {},
+      "variables": {}
+    }
+  }
+}

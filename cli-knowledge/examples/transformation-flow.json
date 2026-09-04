@@ -1,0 +1,117 @@
+{
+  "transformationflows": {
+    "TF_LOAD_DIM": {
+      "kind": "sap.dis.transformationflow",
+      "@EndUserText.label": "Load Dimension",
+      "contents": {
+        "properties": {},
+        "metadata": {
+          "loadType": "INITIAL_ONLY"
+        },
+        "parameters": {},
+        "description": "Load Dimension",
+        "processes": {
+          "viewtransform1": {
+            "component": "com.sap.dwc.viewtransform",
+            "metadata": {
+              "label": "View Transform",
+              "x": 0,
+              "y": 12,
+              "height": 40,
+              "width": 120,
+              "config": {
+                "definition": {
+                  "kind": "entity",
+                  "elements": {
+                    "ID": {
+                      "@EndUserText.label": "ID",
+                      "type": "cds.String",
+                      "length": 10,
+                      "key": true,
+                      "notNull": true
+                    },
+                    "NAME": {
+                      "@EndUserText.label": "Name",
+                      "type": "cds.String",
+                      "length": 100
+                    }
+                  },
+                  "query": {
+                    "SELECT": {
+                      "from": {
+                        "ref": ["V_SOURCE"]
+                      },
+                      "columns": [
+                        { "ref": ["ID"], "key": true },
+                        { "ref": ["NAME"] }
+                      ]
+                    }
+                  },
+                  "@EndUserText.label": "viewtransform1",
+                  "@ObjectModel.modelingPattern": { "#": "DATA_STRUCTURE" },
+                  "@ObjectModel.supportedCapabilities": [{ "#": "DATA_STRUCTURE" }],
+                  "@DataWarehouse.consumption.external": false
+                },
+                "version": { "csn": "1.0" },
+                "meta": {
+                  "creator": "View Editor",
+                  "kind": "sap.dwc.viewmodel"
+                },
+                "$version": "1.0",
+                "name": "TF_LOAD_DIM$TRF_TV_viewtransform1"
+              }
+            }
+          },
+          "target1": {
+            "component": "com.sap.dwc.target",
+            "metadata": {
+              "label": "Target Table",
+              "x": 200,
+              "y": 12,
+              "height": 40,
+              "width": 120,
+              "config": {
+                "attributeMappings": [
+                  { "source": "ID", "target": "ID" },
+                  { "source": "NAME", "target": "NAME" }
+                ],
+                "definition": {
+                  "kind": "entity",
+                  "@EndUserText.label": "Target Table",
+                  "@ObjectModel.modelingPattern": { "#": "DATA_STRUCTURE" },
+                  "@ObjectModel.supportedCapabilities": [{ "#": "DATA_STRUCTURE" }],
+                  "elements": {
+                    "ID": {
+                      "key": true,
+                      "notNull": true,
+                      "type": "cds.String",
+                      "length": 10,
+                      "@EndUserText.label": "ID"
+                    },
+                    "NAME": {
+                      "type": "cds.String",
+                      "length": 100,
+                      "@EndUserText.label": "Name"
+                    }
+                  }
+                },
+                "name": "T_TARGET",
+                "truncate": true
+              }
+            }
+          }
+        },
+        "groups": [],
+        "connections": [
+          {
+            "metadata": { "points": "125,32 195,32" },
+            "src": { "port": "outTable", "process": "viewtransform1" },
+            "tgt": { "port": "inTable", "process": "target1" }
+          }
+        ],
+        "inports": {},
+        "outports": {}
+      }
+    }
+  }
+}

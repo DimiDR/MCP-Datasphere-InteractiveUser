@@ -1,0 +1,291 @@
+{
+  "definitions": {
+    "T1_GV_CLI_TEST": {
+      "kind": "entity",
+      "@EndUserText.label": "CLI Script Graphical Join",
+      "@ObjectModel.modelingPattern": {
+        "#": "DATA_STRUCTURE"
+      },
+      "@ObjectModel.supportedCapabilities": [
+        {
+          "#": "DATA_STRUCTURE"
+        }
+      ],
+      "@DataWarehouse.consumption.external": true,
+      "elements": {
+        "VBELN": {
+          "@EndUserText.label": "Sales Document",
+          "type": "cds.String",
+          "length": 10,
+          "key": true,
+          "notNull": true
+        },
+        "KUNNR": {
+          "@EndUserText.label": "Sold-to Party",
+          "type": "cds.String",
+          "length": 10
+        },
+        "VKORG": {
+          "@EndUserText.label": "Sales Organization",
+          "type": "cds.String",
+          "length": 4
+        },
+        "AUDAT": {
+          "@EndUserText.label": "Document Date",
+          "type": "cds.Date"
+        },
+        "AUART": {
+          "@EndUserText.label": "Sales Document Type",
+          "type": "cds.String",
+          "length": 4
+        },
+        "WAERK": {
+          "@EndUserText.label": "Document Currency",
+          "type": "cds.String",
+          "length": 5
+        },
+        "NETWR_HDR": {
+          "@EndUserText.label": "Net Value Header",
+          "type": "cds.Decimal",
+          "precision": 15,
+          "scale": 2
+        },
+        "SRC_SYSTEM": {
+          "@EndUserText.label": "Source System",
+          "type": "cds.String",
+          "length": 10
+        },
+        "POSNR": {
+          "@EndUserText.label": "Item",
+          "type": "cds.String",
+          "length": 6,
+          "key": true,
+          "notNull": true
+        },
+        "MATNR": {
+          "@EndUserText.label": "Material Number",
+          "type": "cds.String",
+          "length": 40
+        },
+        "MENGE": {
+          "@EndUserText.label": "Order Quantity",
+          "type": "cds.Decimal",
+          "precision": 13,
+          "scale": 3
+        },
+        "VRKME": {
+          "@EndUserText.label": "Sales Unit",
+          "type": "cds.String",
+          "length": 3
+        },
+        "NETWR": {
+          "@EndUserText.label": "Net Value",
+          "type": "cds.Decimal",
+          "precision": 15,
+          "scale": 2
+        }
+      },
+      "query": {
+        "SELECT": {
+          "from": {
+            "SELECT": {
+              "from": {
+                "join": "inner",
+                "args": [
+                  {
+                    "ref": [
+                      "T1_STG_ORDER_HDR"
+                    ],
+                    "as": "T1_STG_ORDER_HDR"
+                  },
+                  {
+                    "ref": [
+                      "T1_STG_ORDER_ITM"
+                    ],
+                    "as": "T1_STG_ORDER_ITM"
+                  }
+                ],
+                "on": [
+                  {
+                    "ref": [
+                      "T1_STG_ORDER_HDR",
+                      "VBELN"
+                    ]
+                  },
+                  "=",
+                  {
+                    "ref": [
+                      "T1_STG_ORDER_ITM",
+                      "VBELN"
+                    ]
+                  }
+                ]
+              },
+              "columns": [
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "VBELN"
+                  ],
+                  "key": true
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "KUNNR"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "VKORG"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "AUDAT"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "AUART"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "WAERK"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "NETWR_HDR"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "SRC_SYSTEM"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_ITM",
+                    "POSNR"
+                  ],
+                  "key": true
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_ITM",
+                    "MATNR"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_ITM",
+                    "MENGE"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_ITM",
+                    "VRKME"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_ITM",
+                    "NETWR"
+                  ]
+                }
+              ]
+            },
+            "as": "Join 1"
+          },
+          "columns": [
+            {
+              "ref": [
+                "VBELN"
+              ],
+              "key": true
+            },
+            {
+              "ref": [
+                "KUNNR"
+              ]
+            },
+            {
+              "ref": [
+                "VKORG"
+              ]
+            },
+            {
+              "ref": [
+                "AUDAT"
+              ]
+            },
+            {
+              "ref": [
+                "AUART"
+              ]
+            },
+            {
+              "ref": [
+                "WAERK"
+              ]
+            },
+            {
+              "ref": [
+                "NETWR_HDR"
+              ]
+            },
+            {
+              "ref": [
+                "SRC_SYSTEM"
+              ]
+            },
+            {
+              "ref": [
+                "POSNR"
+              ],
+              "key": true
+            },
+            {
+              "ref": [
+                "MATNR"
+              ]
+            },
+            {
+              "ref": [
+                "MENGE"
+              ]
+            },
+            {
+              "ref": [
+                "VRKME"
+              ]
+            },
+            {
+              "ref": [
+                "NETWR"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "editorSettings": {
+    "T1_GV_CLI_TEST": {
+      "editor": {
+        "lastModifier": "GRAPHICALVIEWBUILDER",
+        "default": "GRAPHICALVIEWBUILDER"
+      },
+      "uiModel": "{\"contents\":{\"ab43d8ad-3e63-4978-ac84-b17a2e2a41aa\":{\"classDefinition\":\"sap.cdw.querybuilder.Model\",\"name\":\"viewtransform1\",\"label\":\"viewtransform1\",\"modificationDate\":0,\"deploymentDate\":0,\"#objectStatus\":0,\"output\":\"0a3ce418-9514-4826-8ddd-346a158d24fe\",\"nodes\":{\"0a3ce418-9514-4826-8ddd-346a158d24fe\":{\"name\":\"viewtransform1\"},\"7e99df75-c08b-4bc6-9c7d-1a172f091a14\":{\"name\":\"T1_STG_ORDER_HDR\"},\"48e8af58-e9ab-40d7-b255-9df9a1a4d754\":{\"name\":\"T1_STG_ORDER_ITM\"},\"231176dd-a730-4f65-894c-445d4bf8bff5\":{\"name\":\"Join 1\"},\"a7cb3d78-be57-474a-bb27-f4d8afb9b6c9\":{\"name\":\"Projection 1\"}},\"diagrams\":{\"4d5b0ccf-7612-4dbe-9a51-44c3d1682a0d\":{}}},\"0a3ce418-9514-4826-8ddd-346a158d24fe\":{\"classDefinition\":\"sap.cdw.querybuilder.Output\",\"name\":\"viewtransform1\",\"type\":\"graphicView\",\"isDeltaOutboundOn\":false,\"isDeletionVector\":false,\"isPinToMemoryEnabled\":false,\"isAllowConsumption\":false,\"modificationDate\":0,\"deploymentDate\":0,\"#objectStatus\":0,\"elements\":{\"47047ddd-ece3-448f-9107-60db58627f92\":{\"name\":\"VBELN\"},\"48793c18-724d-4222-a2b2-a2719d0e0d0f\":{\"name\":\"KUNNR\"},\"7aadc354-253f-48f1-9d62-d517a190908b\":{\"name\":\"VKORG\"},\"7c079a42-05a2-4192-8a0a-bfea8beb9c64\":{\"name\":\"AUDAT\"},\"c006c186-6155-42bb-b9e4-30325e2aefd5\":{\"name\":\"AUART\"},\"f2e6fa24-2152-490b-8ae8-08131ccb1535\":{\"name\":\"WAERK\"},\"77755608-16e3-4957-9c14-37274fd18596\":{\"name\":\"NETWR_HDR\"},\"e785efa5-dd36-4f11-b367-c13b9f8bea7e\":{\"name\":\"SRC_SYSTEM\"},\"4af2fd16-d19b-46dc-a50d-1a019702d43b\":{\"name\":\"POSNR\"},\"593c46b7-6130-45ea-b8a6-c8b9ecfd2107\":{\"name\":\"MATNR\"},\"ec2dff29-fdfa-4cf1-b5e6-a395ccc1b558\":{\"name\":\"MENGE\"},\"c1c9b6c5-804c-4bda-b6f5-7ce47513e63f\":{\"name\":\"VRKME\"},\"16792f95-bae8-4b5b-88ce-ab8b4e6c75c5\":{\"name\":\"NETWR\"}}},\"4d5b0ccf-7612-4dbe-9a51-44c3d1682a0d\":{\"classDefinition\":\"sap.cdw.querybuilder.ui.Diagram\",\"symbols\":{\"e21baa36-4b8d-46f6-8f7b-93d7a38f4afe\":{},\"6b8cb070-e06b-4ddb-8aa0-5db48ff3d79f\":{\"name\":\"Entity Symbol 1\"},\"bf9cd997-752b-46bd-99e0-cbaed8345869\":{},\"ce479ba4-897e-4672-96d3-a0fa712c83c8\":{},\"a29ac0b2-91a7-4615-b95e-42e4bbf9a6d9\":{\"name\":\"Entity Symbol 2\"},\"e7030799-297a-410e-865f-40a146f59355\":{},\"0d8072a9-4f71-4e3d-8c5a-0a7b4dd8495a\":{},\"97132c4e-ff28-44ff-9020-865ca273930b\":{},\"c004462c-d8de-4828-b670-802ea29311c6\":{}}},\"e21baa36-4b8d-46f6-8f7b-93d7a38f4afe\":{\"classDefinition\":\"sap.cdw.querybuilder.ui.OutputSymbol\",\"x\":154.99999940395355,\"y\":-36.39446450088687,\"width\":140,\"height\":40,\"object\":\"0a3ce418-9514-4826-8ddd-346a158d24fe\"},\"7e99df75-c08b-4bc6-9c7d-1a172f091a14\":{\"classDefinition\":\"sap.cdw.querybuilder.Entity\",\"name\":\"T1_STG_ORDER_HDR\",\"label\":\"T1 Staging Sales Order Header\",\"type\":3,\"isDeltaOutboundOn\":false,\"isDeletionVector\":false,\"isPinToMemoryEnabled\":false,\"isAllowConsumption\":false,\"isHiddenInUi\":false,\"modificationDate\":0,\"deploymentDate\":1785528957000,\"#objectStatus\":\"1\",\"elements\":{\"d06ef03c-0992-4fea-bd44-556b13251c43\":{\"name\":\"VBELN\"},\"e4f3eeb1-dcb9-4209-83c9-3aa3b6dffcc7\":{\"name\":\"KUNNR\"},\"7054454f-d99d-431e-ac35-cb27d92730e9\":{\"name\":\"VKORG\"},\"b8effc25-71cc-4958-ab28-fbfbcd115a34\":{\"name\":\"AUDAT\"},\"cb698210-615c-454e-b13a-de6b3b1c3f51\":{\"name\":\"AUART\"},\"7995f307-6aa6-47d0-b9c5-a71ca5c3a592\":{\"name\":\"WAERK\"},\"d71ca837-f5ef-4084-a978-dc5f9e1d89a9\":{\"name\":\"NETWR_HDR\"},\"5c23538c-ed18-4dae-8f2c-9c2346fc5394\":{\"name\":\"SRC_SYSTEM\"}},\"successorNode\":\"231176dd-a730-4f65-894c-445d4bf8bff5\"},\"d06ef03c-0992-4fea-bd44-556b13251c43\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VBELN\",\"label\":\"Sales Document\",\"newName\":\"VBELN\",\"indexOrder\":0,\"isKey\":true,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"isNotNull\":true,\"successorElement\":\"336b7cac-d568-4916-8ecc-4e10aeb1b5cb\"},\"e4f3eeb1-dcb9-4209-83c9-3aa3b6dffcc7\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"KUNNR\",\"label\":\"Sold-to Party\",\"newName\":\"KUNNR\",\"indexOrder\":1,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"683d8303-45ad-42f9-9eab-e621f1df1b2f\"},\"7054454f-d99d-431e-ac35-cb27d92730e9\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VKORG\",\"label\":\"Sales Organization\",\"newName\":\"VKORG\",\"indexOrder\":2,\"length\":4,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"6672df20-93b4-4370-af66-f35d33aa96ac\"},\"b8effc25-71cc-4958-ab28-fbfbcd115a34\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"AUDAT\",\"label\":\"Document Date\",\"newName\":\"AUDAT\",\"indexOrder\":3,\"dataType\":\"cds.Date\",\"length\":0,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"0f455da5-b8cf-490f-acd8-3cb93dcd66ea\"},\"cb698210-615c-454e-b13a-de6b3b1c3f51\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"AUART\",\"label\":\"Sales Document Type\",\"newName\":\"AUART\",\"indexOrder\":4,\"length\":4,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"a7e1dbab-9d25-42be-9618-142127f69f03\"},\"7995f307-6aa6-47d0-b9c5-a71ca5c3a592\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"WAERK\",\"label\":\"Document Currency\",\"newName\":\"WAERK\",\"indexOrder\":5,\"length\":5,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"e0da8b92-c776-4557-90c4-fadbfa337b18\"},\"d71ca837-f5ef-4084-a978-dc5f9e1d89a9\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"NETWR_HDR\",\"label\":\"Net Value Header\",\"newName\":\"NETWR_HDR\",\"indexOrder\":6,\"dataType\":\"cds.Decimal\",\"length\":0,\"precision\":15,\"scale\":2,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"247cc8c5-2b80-4340-b4a7-173b36a4c14d\"},\"5c23538c-ed18-4dae-8f2c-9c2346fc5394\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"SRC_SYSTEM\",\"label\":\"Source System\",\"newName\":\"SRC_SYSTEM\",\"indexOrder\":7,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"40402383-a2ab-429a-b219-0f8ec83de785\"},\"6b8cb070-e06b-4ddb-8aa0-5db48ff3d79f\":{\"classDefinition\":\"sap.cdw.querybuilder.ui.EntitySymbol\",\"_height\":55,\"name\":\"Entity Symbol 1\",\"x\":-270.99999940395355,\"y\":25,\"width\":160,\"displayName\":\"Entity Symbol 1\",\"object\":\"7e99df75-c08b-4bc6-9c7d-1a172f091a14\"},\"47047ddd-ece3-448f-9107-60db58627f92\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VBELN\",\"label\":\"Sales Document\",\"newName\":\"VBELN\",\"indexOrder\":0,\"isKey\":true,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"isNotNull\":true},\"48793c18-724d-4222-a2b2-a2719d0e0d0f\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"KUNNR\",\"label\":\"Sold-to Party\",\"newName\":\"KUNNR\",\"indexOrder\":1,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"7aadc354-253f-48f1-9d62-d517a190908b\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VKORG\",\"label\":\"Sales Organization\",\"newName\":\"VKORG\",\"indexOrder\":2,\"length\":4,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"7c079a42-05a2-4192-8a0a-bfea8beb9c64\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"AUDAT\",\"label\":\"Document Date\",\"newName\":\"AUDAT\",\"indexOrder\":3,\"dataType\":\"cds.Date\",\"length\":0,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"c006c186-6155-42bb-b9e4-30325e2aefd5\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"AUART\",\"label\":\"Sales Document Type\",\"newName\":\"AUART\",\"indexOrder\":4,\"length\":4,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"f2e6fa24-2152-490b-8ae8-08131ccb1535\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"WAERK\",\"label\":\"Document Currency\",\"newName\":\"WAERK\",\"indexOrder\":5,\"length\":5,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"77755608-16e3-4957-9c14-37274fd18596\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"NETWR_HDR\",\"label\":\"Net Value Header\",\"newName\":\"NETWR_HDR\",\"indexOrder\":6,\"dataType\":\"cds.Decimal\",\"length\":0,\"precision\":15,\"scale\":2,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"e785efa5-dd36-4f11-b367-c13b9f8bea7e\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"SRC_SYSTEM\",\"label\":\"Source System\",\"newName\":\"SRC_SYSTEM\",\"indexOrder\":7,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"48e8af58-e9ab-40d7-b255-9df9a1a4d754\":{\"classDefinition\":\"sap.cdw.querybuilder.Entity\",\"name\":\"T1_STG_ORDER_ITM\",\"label\":\"T1 Staging Sales Order Item\",\"type\":3,\"isDeltaOutboundOn\":false,\"isDeletionVector\":false,\"isPinToMemoryEnabled\":false,\"isAllowConsumption\":false,\"isHiddenInUi\":false,\"modificationDate\":0,\"deploymentDate\":1785528990000,\"#objectStatus\":\"1\",\"elements\":{\"d162cd59-766f-4040-8766-6ff6074aaafc\":{\"name\":\"VBELN\"},\"bd0be934-bbe1-46ce-a816-aeb4c18f09c3\":{\"name\":\"POSNR\"},\"55d68ef0-2ce3-4b76-874b-c4c74dc0a38d\":{\"name\":\"MATNR\"},\"48e973ee-a2cc-4b14-a24c-0d1316d22f37\":{\"name\":\"MENGE\"},\"8b6d43f1-32f7-4f01-a947-c050070482e5\":{\"name\":\"VRKME\"},\"39f50dc4-cd3a-47a9-95d1-114c6ae1ea18\":{\"name\":\"NETWR\"},\"3bf246ba-7649-454d-bfd2-e2ac5aa189eb\":{\"name\":\"WAERK\"},\"ea204e00-abd0-4213-9712-96f32f23aef8\":{\"name\":\"SRC_SYSTEM\"}},\"successorNode\":\"231176dd-a730-4f65-894c-445d4bf8bff5\"},\"d162cd59-766f-4040-8766-6ff6074aaafc\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VBELN\",\"label\":\"Sales Document\",\"newName\":\"VBELN\",\"indexOrder\":0,\"isKey\":true,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"isNotNull\":true,\"successorElement\":\"79b9e74d-2c7e-4451-9d14-1acca508d109\"},\"bd0be934-bbe1-46ce-a816-aeb4c18f09c3\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"POSNR\",\"label\":\"Item\",\"newName\":\"POSNR\",\"indexOrder\":1,\"isKey\":true,\"length\":6,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"isNotNull\":true,\"successorElement\":\"36a85722-2db0-4344-b60f-5d1c017de00f\"},\"55d68ef0-2ce3-4b76-874b-c4c74dc0a38d\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"MATNR\",\"label\":\"Material Number\",\"newName\":\"MATNR\",\"indexOrder\":2,\"length\":40,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"2163e5da-81f3-4b2b-9c15-40f8fe24b2b5\"},\"48e973ee-a2cc-4b14-a24c-0d1316d22f37\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"MENGE\",\"label\":\"Order Quantity\",\"newName\":\"MENGE\",\"indexOrder\":3,\"dataType\":\"cds.Decimal\",\"length\":0,\"precision\":13,\"scale\":3,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"2f82c9fb-43fe-47ad-9bb0-87fd8196f3c9\"},\"8b6d43f1-32f7-4f01-a947-c050070482e5\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VRKME\",\"label\":\"Sales Unit\",\"newName\":\"VRKME\",\"indexOrder\":4,\"length\":3,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"e59d1bd5-9f3b-4d21-a7c6-dc1b19c13091\"},\"39f50dc4-cd3a-47a9-95d1-114c6ae1ea18\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"NETWR\",\"label\":\"Net Value\",\"newName\":\"NETWR\",\"indexOrder\":5,\"dataType\":\"cds.Decimal\",\"length\":0,\"precision\":15,\"scale\":2,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"8e13fa92-bb5a-4c09-97eb-58a86900aaef\"},\"3bf246ba-7649-454d-bfd2-e2ac5aa189eb\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"WAERK\",\"label\":\"Document Currency\",\"newName\":\"WAERK\",\"indexOrder\":6,\"length\":5,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"a6713f04-d28b-49a7-aef1-5f04b41e27cd\"},\"ea204e00-abd0-4213-9712-96f32f23aef8\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"SRC_SYSTEM\",\"label\":\"Source System\",\"newName\":\"SRC_SYSTEM\",\"indexOrder\":7,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"a8e0e5d9-8c6f-4364-bfbb-180429cf6f82\"},\"a29ac0b2-91a7-4615-b95e-42e4bbf9a6d9\":{\"classDefinition\":\"sap.cdw.querybuilder.ui.EntitySymbol\",\"_height\":55,\"name\":\"Entity Symbol 2\",\"x\":-270.99999940395355,\"y\":-80,\"width\":160,\"displayName\":\"Entity Symbol 2\",\"object\":\"48e8af58-e9ab-40d7-b255-9df9a1a4d754\"},\"231176dd-a730-4f65-894c-445d4bf8bff5\":{\"classDefinition\":\"sap.cdw.querybuilder.Join\",\"name\":\"Join 1\",\"mappings\":{\"f8e2cb84-9380-4ed5-8a78-3c930c87cbe3\":{}},\"leftInput\":\"7e99df75-c08b-4bc6-9c7d-1a172f091a14\",\"rightInput\":\"48e8af58-e9ab-40d7-b255-9df9a1a4d754\",\"elements\":{\"336b7cac-d568-4916-8ecc-4e10aeb1b5cb\":{\"name\":\"VBELN\"},\"683d8303-45ad-42f9-9eab-e621f1df1b2f\":{\"name\":\"KUNNR\"},\"6672df20-93b4-4370-af66-f35d33aa96ac\":{\"name\":\"VKORG\"},\"0f455da5-b8cf-490f-acd8-3cb93dcd66ea\":{\"name\":\"AUDAT\"},\"a7e1dbab-9d25-42be-9618-142127f69f03\":{\"name\":\"AUART\"},\"e0da8b92-c776-4557-90c4-fadbfa337b18\":{\"name\":\"WAERK\"},\"247cc8c5-2b80-4340-b4a7-173b36a4c14d\":{\"name\":\"NETWR_HDR\"},\"40402383-a2ab-429a-b219-0f8ec83de785\":{\"name\":\"SRC_SYSTEM\"},\"79b9e74d-2c7e-4451-9d14-1acca508d109\":{\"name\":\"VBELN\"},\"36a85722-2db0-4344-b60f-5d1c017de00f\":{\"name\":\"POSNR\"},\"2163e5da-81f3-4b2b-9c15-40f8fe24b2b5\":{\"name\":\"MATNR\"},\"2f82c9fb-43fe-47ad-9bb0-87fd8196f3c9\":{\"name\":\"MENGE\"},\"e59d1bd5-9f3b-4d21-a7c6-dc1b19c13091\":{\"name\":\"VRKME\"},\"8e13fa92-bb5a-4c09-97eb-58a86900aaef\":{\"name\":\"NETWR\"},\"a6713f04-d28b-49a7-aef1-5f04b41e27cd\":{\"name\":\"WAERK\"},\"a8e0e5d9-8c6f-4364-bfbb-180429cf6f82\":{\"name\":\"SRC_SYSTEM\"}},\"successorNode\":\"a7cb3d78-be57-474a-bb27-f4d8afb9b6c9\"},\"336b7cac-d568-4916-8ecc-4e10aeb1b5cb\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VBELN\",\"label\":\"Sales Document\",\"newName\":\"VBELN\",\"indexOrder\":0,\"isKey\":true,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"isNotNull\":true,\"successorElement\":\"3ec28ead-840a-44aa-bc8d-d0314811d977\"},\"683d8303-45ad-42f9-9eab-e621f1df1b2f\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"KUNNR\",\"label\":\"Sold-to Party\",\"newName\":\"KUNNR\",\"indexOrder\":2,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"2c17e4b7-dcee-419d-a880-b78d368281d9\"},\"6672df20-93b4-4370-af66-f35d33aa96ac\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VKORG\",\"label\":\"Sales Organization\",\"newName\":\"VKORG\",\"indexOrder\":4,\"length\":4,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"fe9dae82-0334-41d5-a55e-161afae0f8ea\"},\"0f455da5-b8cf-490f-acd8-3cb93dcd66ea\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"AUDAT\",\"label\":\"Document Date\",\"newName\":\"AUDAT\",\"indexOrder\":6,\"dataType\":\"cds.Date\",\"length\":0,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"b710879c-0162-4e9e-bab0-d27145b3c98b\"},\"a7e1dbab-9d25-42be-9618-142127f69f03\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"AUART\",\"label\":\"Sales Document Type\",\"newName\":\"AUART\",\"indexOrder\":8,\"length\":4,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"bab47dc3-0651-4766-bd54-053fccd6ccc2\"},\"e0da8b92-c776-4557-90c4-fadbfa337b18\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"WAERK\",\"label\":\"Document Currency\",\"newName\":\"WAERK\",\"indexOrder\":10,\"length\":5,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"81874055-73e1-46d2-b3a8-c83fb5bfc7fa\"},\"247cc8c5-2b80-4340-b4a7-173b36a4c14d\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"NETWR_HDR\",\"label\":\"Net Value Header\",\"newName\":\"NETWR_HDR\",\"indexOrder\":12,\"dataType\":\"cds.Decimal\",\"length\":0,\"precision\":15,\"scale\":2,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"170b61f5-b65d-4c0c-9ed9-4e45b87b6c79\"},\"40402383-a2ab-429a-b219-0f8ec83de785\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"SRC_SYSTEM\",\"label\":\"Source System\",\"newName\":\"SRC_SYSTEM\",\"indexOrder\":14,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"350f443f-129a-4cfb-8342-069090eb36e4\"},\"79b9e74d-2c7e-4451-9d14-1acca508d109\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VBELN\",\"label\":\"Sales Document\",\"newName\":\"VBELN\",\"indexOrder\":1,\"isKey\":true,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"isNotNull\":true,\"successorElement\":\"37fc3136-ef77-483e-84b9-9f82ef9cdd76\"},\"36a85722-2db0-4344-b60f-5d1c017de00f\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"POSNR\",\"label\":\"Item\",\"newName\":\"POSNR\",\"indexOrder\":3,\"isKey\":true,\"length\":6,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"isNotNull\":true,\"successorElement\":\"a73c18d8-b2c7-43e6-b260-c7ecfacd62f5\"},\"4af2fd16-d19b-46dc-a50d-1a019702d43b\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"POSNR\",\"label\":\"Item\",\"newName\":\"POSNR\",\"indexOrder\":9,\"isKey\":true,\"length\":6,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"isNotNull\":true},\"2163e5da-81f3-4b2b-9c15-40f8fe24b2b5\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"MATNR\",\"label\":\"Material Number\",\"newName\":\"MATNR\",\"indexOrder\":5,\"length\":40,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"2a0ddb2a-9668-4039-ab26-fd04ba2d1af2\"},\"593c46b7-6130-45ea-b8a6-c8b9ecfd2107\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"MATNR\",\"label\":\"Material Number\",\"newName\":\"MATNR\",\"indexOrder\":10,\"length\":40,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"2f82c9fb-43fe-47ad-9bb0-87fd8196f3c9\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"MENGE\",\"label\":\"Order Quantity\",\"newName\":\"MENGE\",\"indexOrder\":7,\"dataType\":\"cds.Decimal\",\"length\":0,\"precision\":13,\"scale\":3,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"ba3ed555-d055-40f9-b51e-fb404c909446\"},\"ec2dff29-fdfa-4cf1-b5e6-a395ccc1b558\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"MENGE\",\"label\":\"Order Quantity\",\"newName\":\"MENGE\",\"indexOrder\":11,\"dataType\":\"cds.Decimal\",\"length\":0,\"precision\":13,\"scale\":3,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"e59d1bd5-9f3b-4d21-a7c6-dc1b19c13091\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VRKME\",\"label\":\"Sales Unit\",\"newName\":\"VRKME\",\"indexOrder\":9,\"length\":3,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"0dfae692-12e1-43f9-800f-f2a1f2e76f68\"},\"c1c9b6c5-804c-4bda-b6f5-7ce47513e63f\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VRKME\",\"label\":\"Sales Unit\",\"newName\":\"VRKME\",\"indexOrder\":12,\"length\":3,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"8e13fa92-bb5a-4c09-97eb-58a86900aaef\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"NETWR\",\"label\":\"Net Value\",\"newName\":\"NETWR\",\"indexOrder\":11,\"dataType\":\"cds.Decimal\",\"length\":0,\"precision\":15,\"scale\":2,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"d2ebffe2-f9a8-455a-ba15-d99c0660178b\"},\"16792f95-bae8-4b5b-88ce-ab8b4e6c75c5\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"NETWR\",\"label\":\"Net Value\",\"newName\":\"NETWR\",\"indexOrder\":13,\"dataType\":\"cds.Decimal\",\"length\":0,\"precision\":15,\"scale\":2,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"a6713f04-d28b-49a7-aef1-5f04b41e27cd\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"WAERK\",\"label\":\"Document Currency\",\"newName\":\"WAERK\",\"indexOrder\":13,\"length\":5,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"05e2ca92-729a-412a-b6ba-28d1c154a675\"},\"a8e0e5d9-8c6f-4364-bfbb-180429cf6f82\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"SRC_SYSTEM\",\"label\":\"Source System\",\"newName\":\"SRC_SYSTEM\",\"indexOrder\":15,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"e0feb877-395e-437e-abf7-d787ce545ba3\"},\"bf9cd997-752b-46bd-99e0-cbaed8345869\":{\"classDefinition\":\"sap.cdw.querybuilder.ui.JoinSymbol\",\"font\":\"bold 11px \\\"72\\\",\\\"72full\\\",Arial,Helvetica,sans-serif\",\"x\":-41.00000059604645,\"y\":-32.39446450088687,\"object\":\"231176dd-a730-4f65-894c-445d4bf8bff5\"},\"ce479ba4-897e-4672-96d3-a0fa712c83c8\":{\"classDefinition\":\"sap.cdw.querybuilder.ui.AssociationSymbol\",\"points\":\"-110.99999940395355,52.5 -76,52.5 -76,-11.061131167553526 -41.00000059604645,-11.061131167553526\",\"contentOffsetX\":5,\"contentOffsetY\":5,\"sourceSymbol\":\"6b8cb070-e06b-4ddb-8aa0-5db48ff3d79f\",\"targetSymbol\":\"bf9cd997-752b-46bd-99e0-cbaed8345869\",\"object\":\"231176dd-a730-4f65-894c-445d4bf8bff5\"},\"e7030799-297a-410e-865f-40a146f59355\":{\"classDefinition\":\"sap.cdw.querybuilder.ui.AssociationSymbol\",\"isLeftInput\":false,\"points\":\"-110.99999940395355,-52.5 -76,-52.5 -76,-21.727797834220198 -41.00000059604645,-21.727797834220198\",\"contentOffsetX\":5,\"contentOffsetY\":5,\"sourceSymbol\":\"a29ac0b2-91a7-4615-b95e-42e4bbf9a6d9\",\"targetSymbol\":\"bf9cd997-752b-46bd-99e0-cbaed8345869\",\"object\":\"231176dd-a730-4f65-894c-445d4bf8bff5\"},\"a7cb3d78-be57-474a-bb27-f4d8afb9b6c9\":{\"classDefinition\":\"sap.cdw.querybuilder.RenameElements\",\"_isProjectionNode\":false,\"name\":\"Projection 1\",\"elements\":{\"3ec28ead-840a-44aa-bc8d-d0314811d977\":{\"name\":\"VBELN\"},\"2c17e4b7-dcee-419d-a880-b78d368281d9\":{\"name\":\"KUNNR\"},\"fe9dae82-0334-41d5-a55e-161afae0f8ea\":{\"name\":\"VKORG\"},\"b710879c-0162-4e9e-bab0-d27145b3c98b\":{\"name\":\"AUDAT\"},\"bab47dc3-0651-4766-bd54-053fccd6ccc2\":{\"name\":\"AUART\"},\"81874055-73e1-46d2-b3a8-c83fb5bfc7fa\":{\"name\":\"WAERK\"},\"170b61f5-b65d-4c0c-9ed9-4e45b87b6c79\":{\"name\":\"NETWR_HDR\"},\"350f443f-129a-4cfb-8342-069090eb36e4\":{\"name\":\"SRC_SYSTEM\"},\"37fc3136-ef77-483e-84b9-9f82ef9cdd76\":{\"name\":\"VBELN\"},\"a73c18d8-b2c7-43e6-b260-c7ecfacd62f5\":{\"name\":\"POSNR\"},\"2a0ddb2a-9668-4039-ab26-fd04ba2d1af2\":{\"name\":\"MATNR\"},\"ba3ed555-d055-40f9-b51e-fb404c909446\":{\"name\":\"MENGE\"},\"0dfae692-12e1-43f9-800f-f2a1f2e76f68\":{\"name\":\"VRKME\"},\"d2ebffe2-f9a8-455a-ba15-d99c0660178b\":{\"name\":\"NETWR\"},\"05e2ca92-729a-412a-b6ba-28d1c154a675\":{\"name\":\"WAERK\"},\"e0feb877-395e-437e-abf7-d787ce545ba3\":{\"name\":\"SRC_SYSTEM\"}},\"successorNode\":\"0a3ce418-9514-4826-8ddd-346a158d24fe\"},\"3ec28ead-840a-44aa-bc8d-d0314811d977\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VBELN\",\"label\":\"Sales Document\",\"newName\":\"VBELN\",\"indexOrder\":0,\"isKey\":true,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"isNotNull\":true,\"successorElement\":\"47047ddd-ece3-448f-9107-60db58627f92\"},\"2c17e4b7-dcee-419d-a880-b78d368281d9\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"KUNNR\",\"label\":\"Sold-to Party\",\"newName\":\"KUNNR\",\"indexOrder\":1,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"48793c18-724d-4222-a2b2-a2719d0e0d0f\"},\"fe9dae82-0334-41d5-a55e-161afae0f8ea\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VKORG\",\"label\":\"Sales Organization\",\"newName\":\"VKORG\",\"indexOrder\":2,\"length\":4,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"7aadc354-253f-48f1-9d62-d517a190908b\"},\"b710879c-0162-4e9e-bab0-d27145b3c98b\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"AUDAT\",\"label\":\"Document Date\",\"newName\":\"AUDAT\",\"indexOrder\":3,\"dataType\":\"cds.Date\",\"length\":0,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"7c079a42-05a2-4192-8a0a-bfea8beb9c64\"},\"bab47dc3-0651-4766-bd54-053fccd6ccc2\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"AUART\",\"label\":\"Sales Document Type\",\"newName\":\"AUART\",\"indexOrder\":4,\"length\":4,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"c006c186-6155-42bb-b9e4-30325e2aefd5\"},\"81874055-73e1-46d2-b3a8-c83fb5bfc7fa\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"WAERK\",\"label\":\"Document Currency\",\"newName\":\"WAERK\",\"indexOrder\":5,\"length\":5,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"f2e6fa24-2152-490b-8ae8-08131ccb1535\"},\"170b61f5-b65d-4c0c-9ed9-4e45b87b6c79\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"NETWR_HDR\",\"label\":\"Net Value Header\",\"newName\":\"NETWR_HDR\",\"indexOrder\":6,\"dataType\":\"cds.Decimal\",\"length\":0,\"precision\":15,\"scale\":2,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"77755608-16e3-4957-9c14-37274fd18596\"},\"350f443f-129a-4cfb-8342-069090eb36e4\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"SRC_SYSTEM\",\"label\":\"Source System\",\"newName\":\"SRC_SYSTEM\",\"indexOrder\":7,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"e785efa5-dd36-4f11-b367-c13b9f8bea7e\"},\"37fc3136-ef77-483e-84b9-9f82ef9cdd76\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VBELN\",\"label\":\"Sales Document\",\"newName\":\"VBELN\",\"isRemoved\":true,\"indexOrder\":0,\"isKey\":true,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"isNotNull\":true},\"a73c18d8-b2c7-43e6-b260-c7ecfacd62f5\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"POSNR\",\"label\":\"Item\",\"newName\":\"POSNR\",\"indexOrder\":1,\"isKey\":true,\"length\":6,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"isNotNull\":true,\"successorElement\":\"4af2fd16-d19b-46dc-a50d-1a019702d43b\"},\"2a0ddb2a-9668-4039-ab26-fd04ba2d1af2\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"MATNR\",\"label\":\"Material Number\",\"newName\":\"MATNR\",\"indexOrder\":2,\"length\":40,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"593c46b7-6130-45ea-b8a6-c8b9ecfd2107\"},\"ba3ed555-d055-40f9-b51e-fb404c909446\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"MENGE\",\"label\":\"Order Quantity\",\"newName\":\"MENGE\",\"indexOrder\":3,\"dataType\":\"cds.Decimal\",\"length\":0,\"precision\":13,\"scale\":3,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"ec2dff29-fdfa-4cf1-b5e6-a395ccc1b558\"},\"0dfae692-12e1-43f9-800f-f2a1f2e76f68\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"VRKME\",\"label\":\"Sales Unit\",\"newName\":\"VRKME\",\"indexOrder\":4,\"length\":3,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"c1c9b6c5-804c-4bda-b6f5-7ce47513e63f\"},\"d2ebffe2-f9a8-455a-ba15-d99c0660178b\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"NETWR\",\"label\":\"Net Value\",\"newName\":\"NETWR\",\"indexOrder\":5,\"dataType\":\"cds.Decimal\",\"length\":0,\"precision\":15,\"scale\":2,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false,\"successorElement\":\"16792f95-bae8-4b5b-88ce-ab8b4e6c75c5\"},\"05e2ca92-729a-412a-b6ba-28d1c154a675\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"WAERK\",\"label\":\"Document Currency\",\"newName\":\"WAERK\",\"isRemoved\":true,\"indexOrder\":6,\"length\":5,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"e0feb877-395e-437e-abf7-d787ce545ba3\":{\"classDefinition\":\"sap.cdw.querybuilder.Element\",\"name\":\"SRC_SYSTEM\",\"label\":\"Source System\",\"newName\":\"SRC_SYSTEM\",\"isRemoved\":true,\"indexOrder\":7,\"length\":10,\"precision\":0,\"scale\":0,\"isMeasureBeforeAI\":false,\"isMeasureAI\":false,\"isKeyBeforeAI\":false,\"isKeyAI\":false},\"f8e2cb84-9380-4ed5-8a78-3c930c87cbe3\":{\"classDefinition\":\"sap.cdw.commonmodel.ElementMapping\",\"source\":\"d06ef03c-0992-4fea-bd44-556b13251c43\",\"target\":\"d162cd59-766f-4040-8766-6ff6074aaafc\"},\"0d8072a9-4f71-4e3d-8c5a-0a7b4dd8495a\":{\"classDefinition\":\"sap.cdw.querybuilder.ui.RenameSymbol\",\"font\":\"bold 11px \\\"72\\\",\\\"72full\\\",Arial,Helvetica,sans-serif\",\"x\":56.99999940395355,\"y\":-32.39446450088687,\"object\":\"a7cb3d78-be57-474a-bb27-f4d8afb9b6c9\"},\"97132c4e-ff28-44ff-9020-865ca273930b\":{\"classDefinition\":\"sap.cdw.querybuilder.ui.AssociationSymbol\",\"points\":\"6.999999403953552,-16.39446450088687 56.99999940395355,-16.39446450088687\",\"contentOffsetX\":5,\"contentOffsetY\":5,\"sourceSymbol\":\"bf9cd997-752b-46bd-99e0-cbaed8345869\",\"targetSymbol\":\"0d8072a9-4f71-4e3d-8c5a-0a7b4dd8495a\"},\"c004462c-d8de-4828-b670-802ea29311c6\":{\"classDefinition\":\"sap.cdw.querybuilder.ui.AssociationSymbol\",\"points\":\"104.99999940395355,-16.39446450088687 154.99999940395355,-16.39446450088687\",\"contentOffsetX\":5,\"contentOffsetY\":5,\"sourceSymbol\":\"0d8072a9-4f71-4e3d-8c5a-0a7b4dd8495a\",\"targetSymbol\":\"e21baa36-4b8d-46f6-8f7b-93d7a38f4afe\"}}}"
+    }
+  }
+}

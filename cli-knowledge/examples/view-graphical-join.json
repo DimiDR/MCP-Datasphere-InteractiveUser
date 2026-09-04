@@ -1,0 +1,290 @@
+{
+  "definitions": {
+    "T1_GV_MINIMAL": {
+      "kind": "entity",
+      "elements": {
+        "VBELN": {
+          "@EndUserText.label": "Sales Document",
+          "type": "cds.String",
+          "length": 10,
+          "key": true,
+          "notNull": true
+        },
+        "KUNNR": {
+          "@EndUserText.label": "Sold-to Party",
+          "type": "cds.String",
+          "length": 10
+        },
+        "VKORG": {
+          "@EndUserText.label": "Sales Organization",
+          "type": "cds.String",
+          "length": 4
+        },
+        "AUDAT": {
+          "@EndUserText.label": "Document Date",
+          "type": "cds.Date"
+        },
+        "AUART": {
+          "@EndUserText.label": "Sales Document Type",
+          "type": "cds.String",
+          "length": 4
+        },
+        "WAERK": {
+          "@EndUserText.label": "Document Currency",
+          "type": "cds.String",
+          "length": 5
+        },
+        "NETWR_HDR": {
+          "@EndUserText.label": "Net Value Header",
+          "precision": 15,
+          "scale": 2,
+          "type": "cds.Decimal"
+        },
+        "SRC_SYSTEM": {
+          "@EndUserText.label": "Source System",
+          "type": "cds.String",
+          "length": 10
+        },
+        "POSNR": {
+          "@EndUserText.label": "Item",
+          "type": "cds.String",
+          "length": 6,
+          "key": true,
+          "notNull": true
+        },
+        "MATNR": {
+          "@EndUserText.label": "Material Number",
+          "type": "cds.String",
+          "length": 40
+        },
+        "MENGE": {
+          "@EndUserText.label": "Order Quantity",
+          "precision": 13,
+          "scale": 3,
+          "type": "cds.Decimal"
+        },
+        "VRKME": {
+          "@EndUserText.label": "Sales Unit",
+          "type": "cds.String",
+          "length": 3
+        },
+        "NETWR": {
+          "@EndUserText.label": "Net Value",
+          "precision": 15,
+          "scale": 2,
+          "type": "cds.Decimal"
+        }
+      },
+      "query": {
+        "SELECT": {
+          "from": {
+            "SELECT": {
+              "from": {
+                "join": "inner",
+                "args": [
+                  {
+                    "ref": [
+                      "T1_STG_ORDER_HDR"
+                    ],
+                    "as": "T1_STG_ORDER_HDR"
+                  },
+                  {
+                    "ref": [
+                      "T1_STG_ORDER_ITM"
+                    ],
+                    "as": "T1_STG_ORDER_ITM"
+                  }
+                ],
+                "on": [
+                  {
+                    "ref": [
+                      "T1_STG_ORDER_HDR",
+                      "VBELN"
+                    ]
+                  },
+                  "=",
+                  {
+                    "ref": [
+                      "T1_STG_ORDER_ITM",
+                      "VBELN"
+                    ]
+                  }
+                ]
+              },
+              "columns": [
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "VBELN"
+                  ],
+                  "key": true
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "KUNNR"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_ITM",
+                    "POSNR"
+                  ],
+                  "key": true
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "VKORG"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_ITM",
+                    "MATNR"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "AUDAT"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_ITM",
+                    "MENGE"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "AUART"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_ITM",
+                    "VRKME"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "WAERK"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_ITM",
+                    "NETWR"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "NETWR_HDR"
+                  ]
+                },
+                {
+                  "ref": [
+                    "T1_STG_ORDER_HDR",
+                    "SRC_SYSTEM"
+                  ]
+                }
+              ]
+            },
+            "as": "Join 1"
+          },
+          "columns": [
+            {
+              "ref": [
+                "VBELN"
+              ],
+              "key": true
+            },
+            {
+              "ref": [
+                "KUNNR"
+              ]
+            },
+            {
+              "ref": [
+                "VKORG"
+              ]
+            },
+            {
+              "ref": [
+                "AUDAT"
+              ]
+            },
+            {
+              "ref": [
+                "AUART"
+              ]
+            },
+            {
+              "ref": [
+                "WAERK"
+              ]
+            },
+            {
+              "ref": [
+                "NETWR_HDR"
+              ]
+            },
+            {
+              "ref": [
+                "SRC_SYSTEM"
+              ]
+            },
+            {
+              "ref": [
+                "POSNR"
+              ],
+              "key": true
+            },
+            {
+              "ref": [
+                "MATNR"
+              ]
+            },
+            {
+              "ref": [
+                "MENGE"
+              ]
+            },
+            {
+              "ref": [
+                "VRKME"
+              ]
+            },
+            {
+              "ref": [
+                "NETWR"
+              ]
+            }
+          ]
+        }
+      },
+      "@EndUserText.label": "Graphical Order Join Test",
+      "@ObjectModel.modelingPattern": {
+        "#": "DATA_STRUCTURE"
+      },
+      "@ObjectModel.supportedCapabilities": [
+        {
+          "#": "DATA_STRUCTURE"
+        }
+      ],
+      "@DataWarehouse.consumption.external": true
+    }
+  },
+  "editorSettings": {
+    "T1_GV_MINIMAL": {
+      "editor": {
+        "lastModifier": "GRAPHICALVIEWBUILDER",
+        "default": "GRAPHICALVIEWBUILDER"
+      }
+    }
+  }
+}

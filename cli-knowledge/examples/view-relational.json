@@ -1,0 +1,35 @@
+{
+  "definitions": {
+    "V_REL": {
+      "kind": "entity",
+      "@EndUserText.label": "Relational View",
+      "@ObjectModel.modelingPattern": { "#": "DATA_STRUCTURE" },
+      "@ObjectModel.supportedCapabilities": [{ "#": "DATA_STRUCTURE" }],
+      "@DataWarehouse.consumption.external": false,
+      "elements": {
+        "ID": {
+          "@EndUserText.label": "ID",
+          "type": "cds.String",
+          "length": 100,
+          "key": true,
+          "notNull": true
+        },
+        "Name": {
+          "@EndUserText.label": "Name",
+          "type": "cds.String",
+          "length": 100
+        }
+      },
+      "query": {
+        "SELECT": {
+          "from": { "ref": ["T1"], "as": "T" },
+          "columns": [
+            { "ref": ["T", "ID"] },
+            { "ref": ["T", "Name"] }
+          ]
+        }
+      },
+      "@DataWarehouse.sqlEditor.query": "SELECT \"T\".\"ID\", \"T\".\"Name\" FROM \"T1\" AS \"T\""
+    }
+  }
+}

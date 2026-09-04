@@ -1,7 +1,7 @@
 {
   "name": "sap-datasphere-interactive-mcp",
-  "version": "1.2.2",
-  "description": "SAP Datasphere Interactive Usage MCP — OAuth, catalog, analytical and relational OData",
+  "version": "1.3.0",
+  "description": "SAP Datasphere Interactive Usage MCP — OAuth, catalog, analytical/relational OData, plus two CLI runner tools",
   "type": "module",
   "main": "dist/index.js",
   "bin": {

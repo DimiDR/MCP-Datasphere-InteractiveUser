@@ -1,0 +1,26 @@
+{
+  "dataflows": {
+    "DF_PROBE": {
+      "kind": "sap.dis.dataflow",
+      "@EndUserText.label": "Data Flow Probe",
+      "contents": {
+        "description": "DF_PROBE",
+        "processes": {},
+        "groups": [],
+        "connections": [],
+        "inports": {},
+        "outports": {},
+        "properties": {},
+        "metadata": {
+          "dwc-isPrimaryKeysProcessed": true,
+          "dwc-restartOnFail": false
+        },
+        "parameters": {},
+        "parameterMapping": {}
+      },
+      "sources": {},
+      "targets": {},
+      "connections": {}
+    }
+  }
+}

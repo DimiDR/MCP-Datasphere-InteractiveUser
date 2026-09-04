@@ -47,6 +47,14 @@ export const config = {
     spaceId: process.env.DSP_SPACE_ID?.trim() || "",
     assetId: process.env.DSP_ASSET_ID?.trim() || "",
   },
+  cli: {
+    path: process.env.DSP_CLI_PATH?.trim() || "",
+    timeoutSeconds: (() => {
+      const raw = Number(process.env.DSP_CLI_TIMEOUT_SECONDS);
+      if (!Number.isFinite(raw) || raw <= 0) return 120;
+      return Math.min(600, Math.max(30, Math.floor(raw)));
+    })(),
+  },
 };
 
 export function analyticalDataUrl(spaceId = config.datasphere.spaceId, assetId = config.datasphere.assetId): string {
