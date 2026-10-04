@@ -1,7 +1,8 @@
+import { filterAssets } from "./read-safeguard.js";
 import { XMLParser } from "fast-xml-parser";
 import { cacheKey, clearCache, getCacheStats, metadataCache } from "./cache.js";
 import { config } from "./config.js";
-import { assertOperation } from "./policy.js";
+import { assertOperation, assertObjectName, readPrefixFilter } from "./policy.js";
 import { dspFetch } from "./http.js";
 import { authStatus, getValidAccessToken, loadToken } from "./oauth.js";
 
@@ -272,17 +273,17 @@ export async function getSpaceAssets(
     {
       $top: options?.top ?? 50,
       $skip: options?.skip ?? 0,
-      $filter: options?.filter,
+      $filter: readPrefixFilter(config.policy, "assetId", options?.filter),
       $orderby: options?.orderby,
-      $select: options?.select,
+      $select: config.policy.readObjectPrefixes.length && options?.select ? `${options.select},assetId` : options?.select,
       $count: options?.count || undefined,
     },
   );
-  const assets = Array.isArray(data.value) ? data.value : [];
+  const assets = filterAssets(config.policy, data.value);
   return {
     space_id: spaceId,
     value: assets,
-    count: data["@odata.count"] ?? assets.length,
+    count: config.policy.readObjectPrefixes.length ? assets.length : data["@odata.count"] ?? assets.length,
     returned: assets.length,
   };
 }
@@ -298,20 +299,21 @@ export async function listCatalogAssets(options?: {
   const data = await dspGetJson("/api/v1/datasphere/consumption/catalog/assets", {
     $top: options?.top ?? 50,
     $skip: options?.skip ?? 0,
-    $filter: options?.filter,
+    $filter: readPrefixFilter(config.policy, "assetId", options?.filter),
     $orderby: options?.orderby,
-    $select: options?.select,
+    $select: config.policy.readObjectPrefixes.length && options?.select ? `${options.select},assetId` : options?.select,
     $count: options?.count || undefined,
   });
-  const assets = Array.isArray(data.value) ? data.value : [];
+  const assets = filterAssets(config.policy, data.value);
   return {
     value: assets,
-    count: data["@odata.count"] ?? assets.length,
+    count: config.policy.readObjectPrefixes.length ? assets.length : data["@odata.count"] ?? assets.length,
     returned: assets.length,
   };
 }
 
 export async function getAssetDetails(spaceId: string, assetId: string): Promise<DspJson> {
+  assertObjectName(config.policy, assetId, "read");
   return dspGetJson(
     `/api/v1/datasphere/consumption/catalog/spaces('${encodeURIComponent(spaceId)}')/assets('${encodeURIComponent(assetId)}')`,
   );
@@ -324,7 +326,7 @@ export async function searchCatalog(query: string, top = 50): Promise<DspJson> {
   const { value: data, cache_hit } = await metadataCache.getOrFetch(key, () =>
     dspGetJson("/api/v1/datasphere/consumption/catalog/assets", { $top: 500, $skip: 0 }),
   );
-  const assets = Array.isArray(data.value) ? (data.value as DspJson[]) : [];
+  const assets = filterAssets(config.policy, data.value);
   const terms = query
     .replace(/^SCOPE:\S+\s*/i, "")
     .toLowerCase()
@@ -353,6 +355,7 @@ export async function getAnalyticalMetadata(
   assetId: string,
 ): Promise<ParsedAnalyticalMetadata> {
   assertOperation(config.policy, "read");
+  assertObjectName(config.policy, assetId, "read");
   const key = cacheKey(["analytical", "metadata", spaceId, assetId]);
   const { value } = await metadataCache.getOrFetch(key, async () => {
     const servicePath = `/api/v1/datasphere/consumption/analytical/${encodeURIComponent(spaceId)}/${encodeURIComponent(assetId)}`;
@@ -364,6 +367,7 @@ export async function getAnalyticalMetadata(
 
 async function fetchAnalyticalService(spaceId: string, assetId: string): Promise<DspJson> {
   assertOperation(config.policy, "read");
+  assertObjectName(config.policy, assetId, "read");
   const key = cacheKey(["analytical", "service", spaceId, assetId]);
   const servicePath = `/api/v1/datasphere/consumption/analytical/${encodeURIComponent(spaceId)}/${encodeURIComponent(assetId)}`;
   const { value } = await metadataCache.getOrFetch(key, () => dspGetJson(`${servicePath}/`));

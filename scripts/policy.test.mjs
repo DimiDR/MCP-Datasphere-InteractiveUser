@@ -8,11 +8,11 @@ import { join } from "node:path";
 
 const enabled = parsePolicy({ DSP_ALLOW_WRITE: "true", DSP_ALLOW_DELETE: "true", DSP_ALLOWED_WRITE_SPACES: "DEV, TEST" });
 const command = (action, ...flags) => ["objects", "views", action, ...flags];
-const restricted = parsePolicy({ DSP_ALLOW_WRITE: "true", DSP_ALLOW_DELETE: "true", DSP_ALLOWED_WRITE_SPACES: "DEV, TEST, DEV", DSP_ALLOWED_OBJECT_PREFIXES: "ABZ*, HRA, ABZ" });
+const restricted = parsePolicy({ DSP_ALLOW_WRITE: "true", DSP_ALLOW_DELETE: "true", DSP_ALLOWED_WRITE_SPACES: "DEV, TEST, DEV", DSP_ALLOW_WRITE_OBJECT_PREFIXES: "ABZ*, HRA, ABZ" });
 
 test("multiple spaces and prefixes are trimmed, deduplicated and combined", () => {
   assert.deepEqual(restricted.writeSpaces, ["DEV", "TEST"]);
-  assert.deepEqual(restricted.objectPrefixes, ["ABZ", "HRA"]);
+  assert.deepEqual(restricted.writeObjectPrefixes, ["ABZ", "HRA"]);
   for (const space of ["DEV", "TEST"]) {
     for (const name of ["ABZ_SALES", "HRA_EMPLOYEE", "ABZ"]) {
       authorizeCli(restricted, command("delete", "--space", space, "--technical-name", name));
@@ -24,10 +24,10 @@ test("multiple spaces and prefixes are trimmed, deduplicated and combined", () =
   assert.throws(() => authorizeCli(restricted, command("delete", "--space", "PROD", "--technical-name", "ABZ_A")));
   assert.throws(() => authorizeCli(restricted, command("delete", "--space", "DEV")));
   authorizeCli(restricted, command("read", "--space", "PROD", "--technical-name", "OTHER"));
-  assert.deepEqual(parsePolicy({}).objectPrefixes, []);
-  assert.deepEqual(parsePolicy({ DSP_ALLOWED_OBJECT_PREFIXES: " " }).objectPrefixes, []);
+  assert.deepEqual(parsePolicy({}).writeObjectPrefixes, []);
+  assert.deepEqual(parsePolicy({ DSP_ALLOW_WRITE_OBJECT_PREFIXES: " " }).writeObjectPrefixes, []);
   for (const value of ["*", "AB*Z", "ABZ,,HRA", "ABZ,", "ABZ?", "ABZ**,HRA"]) {
-    assert.throws(() => parsePolicy({ DSP_ALLOWED_OBJECT_PREFIXES: value }));
+    assert.throws(() => parsePolicy({ DSP_ALLOW_WRITE_OBJECT_PREFIXES: value }));
   }
 });
 
@@ -128,7 +128,7 @@ test("reject ambiguous syntax, credentials, arbitrary commands and duplicate sco
 test("read disabled blocks every consumption entry including cached results and CLI before auth", async () => {
   Object.assign(process.env, {
     DSP_ALLOW_READ: "false", DSP_ALLOW_WRITE: "false", DSP_ALLOW_DELETE: "false",
-    DSP_ALLOWED_WRITE_SPACES: "", DSP_ALLOWED_OBJECT_PREFIXES: "", DSP_OAUTH_CLIENT_ID: "test",
+    DSP_ALLOWED_WRITE_SPACES: "", DSP_ALLOW_WRITE_OBJECT_PREFIXES: "", DSP_ALLOW_READ_OBJECT_PREFIXES: "", DSP_ALLOWED_OBJECT_PREFIXES: "", DSP_OAUTH_CLIENT_ID: "test",
     DSP_OAUTH_AUTHORIZE_URL: "https://example.invalid/authorize",
     DSP_OAUTH_TOKEN_URL: "https://example.invalid/token", DSP_TENANT_URL: "https://example.invalid",
   });

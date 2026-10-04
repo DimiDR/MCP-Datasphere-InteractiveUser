@@ -57,12 +57,15 @@ DSP_ALLOW_READ=true
 DSP_ALLOW_WRITE=true
 DSP_ALLOW_DELETE=false
 DSP_ALLOWED_WRITE_SPACES=DEV_SPACE,TEST_SPACE
-DSP_ALLOWED_OBJECT_PREFIXES=ABZ*,HRA
+DSP_ALLOW_READ_OBJECT_PREFIXES=SOURCE_,HRA
+DSP_ALLOW_WRITE_OBJECT_PREFIXES=ABZ*
 ```
 
-Only objects whose technical names start with `ABZ` or `HRA` can be created/updated in those two Spaces. Set `DSP_ALLOW_DELETE=true` to permit deletion under the same restrictions. Matching is case-sensitive; `ABZ` and `ABZ*` are equivalent. An empty prefix setting disables only the name restriction, not the Space or operation checks.
+Only objects starting with `SOURCE_` or `HRA` can be read; only objects starting with `ABZ` can be created/updated in those two Spaces. The lists are independent: write permission does not imply read permission. Set `DSP_ALLOW_DELETE=true` to permit deletion under the write restrictions. Matching is case-sensitive; `ABZ` and `ABZ*` are equivalent. Each empty prefix setting disables only its own name restriction, not the Space or operation checks.
 
-With prefixes configured, delete requires `--technical-name`. Create/update require exactly one JSON payload (`--file-path` or `--input`). All submitted object and auxiliary definition names are checked, and the CLI receives a private snapshot of the checked JSON. Unknown payload sections/formats are blocked. See [Object naming restrictions](../README.md#object-naming-restrictions) for supported sections and examples. Reads are unaffected by prefixes.
+With write prefixes configured, delete requires `--technical-name`. Create/update require exactly one JSON payload (`--file-path` or `--input`). All submitted object and auxiliary definition names are checked, and the CLI receives a private snapshot of the checked JSON. Unknown payload sections/formats are blocked.
+
+With read prefixes configured, object reads require an allowed `--technical-name`; CLI responses are checked before return. CLI lists return only allowed technical names; custom list `--select` and bulk `spaces read` are blocked. Consumption catalog/search results are filtered too, and metadata/data queries check the asset name even on cache hits. Unknown CLI response shapes are withheld. See [Object naming restrictions](../README.md#object-naming-restrictions) for details. Remove the obsolete `DSP_ALLOWED_OBJECT_PREFIXES` variable after migrating its value to the write setting, or startup will fail with a migration message.
 
 Only `objects <type> list/read/create/update/delete` and `spaces list/read` are approved. Other commands, including admin, task execution, job status, login/logout and config commands, are blocked. The internal cache initialization retry is an implementation exception.
 

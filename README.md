@@ -20,10 +20,11 @@ DSP_ALLOW_READ=true
 DSP_ALLOW_WRITE=true
 DSP_ALLOW_DELETE=false
 DSP_ALLOWED_WRITE_SPACES=MY_DEV_SPACE,MY_TEST_SPACE
-DSP_ALLOWED_OBJECT_PREFIXES=ABZ*,HRA
+DSP_ALLOW_READ_OBJECT_PREFIXES=SOURCE_,HRA
+DSP_ALLOW_WRITE_OBJECT_PREFIXES=ABZ*
 ```
 
-This example allows reading all SAP-authorized Spaces and creating/updating objects only in `MY_DEV_SPACE` or `MY_TEST_SPACE`, and only if their technical names start with `ABZ` or `HRA`. Deletion stays blocked. Both the Space and name rule must match.
+This example allows reading objects starting with `SOURCE_` or `HRA` across SAP-authorized Spaces, and creating/updating objects starting with `ABZ` only in `MY_DEV_SPACE` or `MY_TEST_SPACE`. Deletion stays blocked. Read and write permissions are independent: add `ABZ` to the read list if you also want to read back or query those objects.
 
 | Variable | Default | Meaning |
 |---|---|---|
@@ -31,13 +32,20 @@ This example allows reading all SAP-authorized Spaces and creating/updating obje
 | `DSP_ALLOW_WRITE` | `false` | Allow object create/update, including their automatic deployment |
 | `DSP_ALLOW_DELETE` | `false` | Independently allow object deletion |
 | `DSP_ALLOWED_WRITE_SPACES` | empty | Exact, case-sensitive Space IDs allowed for both write and delete; comma-separated; empty allows none |
-| `DSP_ALLOWED_OBJECT_PREFIXES` | empty | Optional case-sensitive prefixes for create/update/delete; comma-separated; empty means no name restriction |
+| `DSP_ALLOW_WRITE_OBJECT_PREFIXES` | empty | Optional case-sensitive prefixes for create/update/delete; comma-separated; empty means no name restriction |
+| `DSP_ALLOW_READ_OBJECT_PREFIXES` | empty | Independent case-sensitive prefixes for object reads, metadata, queries, catalog/search and CLI lists; empty means no read-name restriction |
 
 Booleans accept only `true` or `false`; malformed values stop startup. Space IDs accept letters, digits and underscores, with no wildcard. `DSP_SPACE_ID` is still only a consumption default, never a write authorization. To enable deletion in the listed Spaces, explicitly set `DSP_ALLOW_DELETE=true`.
 
 ### Object naming restrictions
 
-`DSP_ALLOWED_OBJECT_PREFIXES=ABZ*,HRA,Z_TEAM_` permits names such as `ABZ_SALES`, `HRA_EMPLOYEES` and `Z_TEAM_VIEW`. `OTHER_VIEW`, `X_ABZ_SALES` and `abz_sales` are blocked for mutations. `ABZ*` and `ABZ` are equivalent prefix matches; `HRA` also permits `HRA1`. Use `HRA_` if the underscore must follow the prefix. Spaces around entries are trimmed and duplicates removed. A bare `*`, internal wildcards, empty entries and other invalid patterns stop startup. This setting applies equally to every allowed write Space and does not restrict reads.
+`DSP_ALLOWED_OBJECT_PREFIXES` has been replaced by `DSP_ALLOW_READ_OBJECT_PREFIXES` and `DSP_ALLOW_WRITE_OBJECT_PREFIXES`. Move the old value to the write variable and remove the old variable; configure the read variable separately. A non-empty old variable prevents startup to avoid accidentally dropping an existing restriction. Neither new prefix variable overrides `DSP_ALLOW_READ`, `DSP_ALLOW_WRITE`, `DSP_ALLOW_DELETE` or SAP permissions.
+
+The read rule checks technical asset/object names, including default assets and cache hits. Catalog/search responses omit disallowed or unidentifiable assets. With read restrictions, catalog `count` reflects visible entries in the fetched page, so pages can be shorter; it is not a tenant-wide total. A requested catalog `select` additionally includes `assetId` for checking. Source references inside an allowed object's definition may mention other objects; this does not authorize separate reads of their definitions or data. The rule controls the queried asset, not row-level lineage or the data it derives from its sources.
+
+CLI lists return only permitted technical names. Custom CLI list `--select` and `spaces read` (which can export multiple definitions) are blocked when read prefixes are set; use catalog tools or individual object reads. CLI read responses are validated before return; unknown JSON formats, mixed permitted/disallowed definitions and raw backend errors are withheld. `spaces list` and consumption Space information remain available.
+
+`DSP_ALLOW_WRITE_OBJECT_PREFIXES=ABZ*,HRA,Z_TEAM_` permits names such as `ABZ_SALES`, `HRA_EMPLOYEES` and `Z_TEAM_VIEW`. `OTHER_VIEW`, `X_ABZ_SALES` and `abz_sales` are blocked for mutations. `ABZ*` and `ABZ` are equivalent prefix matches; `HRA` also permits `HRA1`. Use `HRA_` if the underscore must follow the prefix. Spaces around entries are trimmed and duplicates removed. A bare `*`, internal wildcards, empty entries and other invalid patterns stop startup. This setting applies equally to every allowed write Space and does not restrict reads.
 
 Deletion checks the explicit `--technical-name`. Create/update check the names inside JSON from exactly one `--file-path` or `--input`; a matching filename alone is insufficient. Every submitted name must match, including helper definitions and keys in `businessLayerDefinitions`, `editorSettings` and `sharing`. Existing source-object references may use other names because those references do not submit a new definition of the source.
 

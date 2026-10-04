@@ -1,4 +1,4 @@
-import { assertOperation } from "./policy.js";
+import { assertOperation, assertObjectName } from "./policy.js";
 import { analyticalDataUrl, config } from "./config.js";
 import {
   fetchAnalyticalService,
@@ -207,6 +207,7 @@ export async function queryAnalyticalModel(options?: QueryOptions): Promise<Quer
     options?.assetId,
     config.datasphere,
   );
+  assertObjectName(config.policy, assetId, "read");
   const entitySet = await resolveAnalyticalEntitySet(spaceId, assetId, {
     entitySet: options?.entitySet,
     parameters: options?.parameters,
@@ -222,6 +223,7 @@ export async function queryAnalyticalModel(options?: QueryOptions): Promise<Quer
 
   const base = analyticalDataUrl(spaceId, assetId);
   const url = new URL(`${base}/${entitySet}`);
+  if (!url.href.startsWith(`${base}/`)) throw new Error("Safeguard: entity_set must stay inside the selected asset.");
   url.searchParams.set("$top", String(top));
   if (options?.skip != null) url.searchParams.set("$skip", String(options.skip));
   // When $apply is present, omit $select (INA ignores aliases in $apply when $select is combined)
@@ -246,6 +248,7 @@ export async function getAnalyticalFields(options?: {
     options?.assetId,
     config.datasphere,
   );
+  assertObjectName(config.policy, assetId, "read");
   const meta = await getAnalyticalMetadata(spaceId, assetId);
   const mainType = meta.entity_types.find((et) => !/Parameters$/i.test(et.name));
   const paramType = meta.entity_types.find((et) => /Parameters$/i.test(et.name));
@@ -284,6 +287,7 @@ export async function getAnalyticalServiceDocument(options?: {
     options?.assetId,
     config.datasphere,
   );
+  assertObjectName(config.policy, assetId, "read");
   return fetchAnalyticalService(spaceId, assetId);
 }
 
@@ -298,6 +302,7 @@ export async function listRelationalEntities(options?: {
     options?.assetId,
     config.datasphere,
   );
+  assertObjectName(config.policy, assetId, "read");
   const path = `/api/v1/datasphere/consumption/relational/${encodeURIComponent(spaceId)}/${encodeURIComponent(assetId)}/`;
   const key = cacheKey(["relational", "service", spaceId, assetId]);
   const doc = (
@@ -347,8 +352,11 @@ export async function queryRelationalEntity(options: {
     options.assetId,
     config.datasphere,
   );
+  assertObjectName(config.policy, assetId, "read");
   const base = `${config.datasphere.tenantUrl.replace(/\/$/, "")}/api/v1/datasphere/consumption/relational/${encodeURIComponent(spaceId)}/${encodeURIComponent(assetId)}/${encodeURIComponent(options.entityName)}`;
   const url = new URL(base);
+  const serviceRoot = base.slice(0, base.lastIndexOf("/") + 1);
+  if (!url.href.startsWith(serviceRoot)) throw new Error("Safeguard: entity_name must stay inside the selected asset.");
   url.searchParams.set("$top", String(options.top ?? 100));
   if (options.skip != null) url.searchParams.set("$skip", String(options.skip));
   if (options.select) url.searchParams.set("$select", options.select);

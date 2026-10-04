@@ -5,10 +5,14 @@ export type Policy = Readonly<{
   write: boolean;
   delete: boolean;
   writeSpaces: readonly string[];
-  objectPrefixes: readonly string[];
+  writeObjectPrefixes: readonly string[];
+  readObjectPrefixes: readonly string[];
 }>;
 
 export function parsePolicy(env: NodeJS.ProcessEnv): Policy {
+  if (env.DSP_ALLOWED_OBJECT_PREFIXES?.trim()) {
+    throw new Error("DSP_ALLOWED_OBJECT_PREFIXES was replaced: use DSP_ALLOW_READ_OBJECT_PREFIXES and DSP_ALLOW_WRITE_OBJECT_PREFIXES.");
+  }
   const boolean = (name: string, fallback: boolean): boolean => {
     const raw = env[name];
     if (raw === undefined) return fallback;
@@ -21,30 +25,45 @@ export function parsePolicy(env: NodeJS.ProcessEnv): Policy {
   if (spaces.some((s) => !/^[A-Za-z0-9_]+$/.test(s))) {
     throw new Error("DSP_ALLOWED_WRITE_SPACES must contain comma-separated technical Space IDs (letters, digits, underscore); no wildcards.");
   }
-  const prefixRaw = env.DSP_ALLOWED_OBJECT_PREFIXES?.trim() ?? "";
-  const prefixes = prefixRaw ? prefixRaw.split(",").map((s) => s.trim()) : [];
-  if (prefixes.some((s) => !/^[A-Za-z0-9_]+\*?$/.test(s))) {
-    throw new Error("DSP_ALLOWED_OBJECT_PREFIXES must contain comma-separated prefixes, optionally ending in * (e.g. ABZ*,HRA). Bare * and empty entries are not allowed.");
-  }
+  const parsePrefixes = (key: string): readonly string[] => {
+    const prefixRaw = env[key]?.trim() ?? "";
+    const prefixes = prefixRaw ? prefixRaw.split(",").map((s) => s.trim()) : [];
+    if (prefixes.some((s) => !/^[A-Za-z0-9_]+\*?$/.test(s))) {
+      throw new Error(`${key} must contain comma-separated prefixes, optionally ending in * (e.g. ABZ*,HRA). Bare * and empty entries are not allowed.`);
+    }
+    return Object.freeze([...new Set(prefixes.map((s) => s.replace(/\*$/, "")))]);
+  };
   return Object.freeze({
     read: boolean("DSP_ALLOW_READ", true),
     write: boolean("DSP_ALLOW_WRITE", false),
     delete: boolean("DSP_ALLOW_DELETE", false),
     writeSpaces: Object.freeze([...new Set(spaces)]),
-    objectPrefixes: Object.freeze([...new Set(prefixes.map((s) => s.replace(/\*$/, "")))]),
+    writeObjectPrefixes: parsePrefixes("DSP_ALLOW_WRITE_OBJECT_PREFIXES"),
+    readObjectPrefixes: parsePrefixes("DSP_ALLOW_READ_OBJECT_PREFIXES"),
   });
 }
 
-export function assertObjectName(policy: Policy, name: string): void {
-  if (!policy.objectPrefixes.length) return;
-  if (!/^[A-Za-z0-9_][A-Za-z0-9_.]*$/.test(name) ||
-      !policy.objectPrefixes.some((prefix) => name.startsWith(prefix))) {
-    throw new Error(`Safeguard: object '${name}' does not match DSP_ALLOWED_OBJECT_PREFIXES.`);
+export function objectNameAllowed(policy: Policy, name: unknown, operation: Operation): boolean {
+  const prefixes = operation === "read" ? policy.readObjectPrefixes : policy.writeObjectPrefixes;
+  if (!prefixes.length) return true;
+  return typeof name === "string" && /^[A-Za-z0-9_][A-Za-z0-9_.]*$/.test(name) &&
+    prefixes.some((prefix) => name.startsWith(prefix));
+}
+
+export function assertObjectName(policy: Policy, name: string, operation: Operation = "write"): void {
+  if (!objectNameAllowed(policy, name, operation)) {
+    throw new Error(`Safeguard: object '${name}' does not match DSP_ALLOW_${operation === "read" ? "READ" : "WRITE"}_OBJECT_PREFIXES.`);
   }
 }
 
+export function readPrefixFilter(policy: Policy, field: string, filter?: string): string | undefined {
+  if (!policy.readObjectPrefixes.length) return filter;
+  const restriction = policy.readObjectPrefixes.map((prefix) => `startswith(${field},'${prefix}')`).join(" or ");
+  return filter ? `(${restriction}) and (${filter})` : `(${restriction})`;
+}
+
 /** Inspect every submitted object, not references to existing source objects. */
-export function validateObjectPayload(policy: Policy, raw: string, objectType: string): string {
+export function validateObjectPayload(policy: Policy, raw: string, objectType: string, operation: Operation = "write"): string {
   let payload: unknown;
   try { payload = JSON.parse(raw); } catch { throw new Error("Safeguard: object payload must be valid JSON."); }
   const isMap = (value: unknown): value is Record<string, unknown> =>
@@ -61,7 +80,7 @@ export function validateObjectPayload(policy: Policy, raw: string, objectType: s
       throw new Error(`Safeguard: unsupported payload section '${section}' with name restrictions enabled.`);
     }
     for (const [name, definition] of Object.entries(value)) {
-      assertObjectName(policy, name);
+      assertObjectName(policy, name, operation);
       if (!isMap(definition)) throw new Error(`Safeguard: invalid definition for '${name}'.`);
     }
   }
@@ -131,7 +150,24 @@ export function authorizeCli(policy: Policy, args: string[]): string[] {
   }
   if ((objects || action === "read") && !space) return deny("explicit --space is required; CLI defaults are not used.");
   assertOperation(policy, operation, space);
-  if (operation === "delete" && policy.objectPrefixes.length) {
+  if (operation === "read" && policy.readObjectPrefixes.length) {
+    if (spaces && action === "read") return deny("spaces read can export other objects; use scoped object read or get_space_info.");
+    if (objects && action === "read") {
+      const index = output.indexOf("--technical-name");
+      if (index < 0) return deny("explicit --technical-name required with read name restrictions enabled.");
+      assertObjectName(policy, output[index + 1], "read");
+    }
+    if (objects && action === "list") {
+      // Select only the technical name to avoid nested definitions bypassing the read scope.
+      if (seen.has("--select")) return deny("custom --select is not supported for CLI lists with read name restrictions; use consumption catalog tools.");
+      const index = output.indexOf("--filter");
+      const filter = readPrefixFilter(policy, "technicalName", index >= 0 ? output[index + 1] : undefined)!;
+      if (index >= 0) output[index + 1] = filter;
+      else output.push("--filter", filter);
+      output.push("--select", "technicalName");
+    }
+  }
+  if (operation === "delete" && policy.writeObjectPrefixes.length) {
     const index = output.indexOf("--technical-name");
     if (index < 0) return deny("explicit --technical-name required with name restrictions enabled.");
     assertObjectName(policy, output[index + 1]);

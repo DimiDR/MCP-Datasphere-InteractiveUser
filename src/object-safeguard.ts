@@ -4,7 +4,7 @@ import { validateObjectPayload, type Policy } from "./policy.js";
 
 /** Called on normalized, authorized CLI args before authentication or spawning. */
 export function checkedObjectPayload(policy: Policy, args: string[], cwd: string): string | undefined {
-  if (!policy.objectPrefixes.length || args[0] !== "objects" || !["create", "update"].includes(args[2])) return;
+  if (!policy.writeObjectPrefixes.length || args[0] !== "objects" || !["create", "update"].includes(args[2])) return;
   const file = args.indexOf("--file-path");
   const input = args.indexOf("--input");
   if ((file >= 0) === (input >= 0)) {

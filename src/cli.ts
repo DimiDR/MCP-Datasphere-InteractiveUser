@@ -13,6 +13,7 @@ import { config } from "./config.js";
 import { authorizeCli } from "./policy.js";
 import { clearCache } from "./cache.js";
 import { checkedObjectPayload, snapshotArgs } from "./object-safeguard.js";
+import { checkedCliReadOutput } from "./read-safeguard.js";
 import {
   authStatus,
   getValidAccessToken,
@@ -283,6 +284,9 @@ function packResult(
   },
   extra?: Partial<CliRunResult>,
 ): CliRunResult {
+  if (config.policy.readObjectPrefixes.length && args[0] === "objects" && ["list", "read"].includes(args[2])) {
+    raw = { ...raw, stdout: raw.exitCode === 0 && !raw.timedOut ? checkedCliReadOutput(config.policy, args, raw.stdout) : "", stderr: raw.exitCode === 0 && !raw.timedOut ? "" : "CLI read failed; backend output hidden by read safeguard." };
+  }
   const out = truncate(redact(raw.stdout));
   const errOut = truncate(redact(raw.stderr));
   return {
