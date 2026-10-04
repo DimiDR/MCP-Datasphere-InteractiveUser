@@ -7,9 +7,47 @@ Interactive Usage OAuth plus **consumption** catalog / analytical / relational O
 | Tool | Role |
 |------|------|
 | `datasphere_cli_status` | Is the CLI installed? Is this MCP logged in? |
-| `datasphere_cli_run` | Run any design-time/admin CLI command as an argv array |
+| `datasphere_cli_run` | Run approved object CRUD and Space read/list commands as an argv array |
 
-There is **no** MCP tool per CLI command. All ~220 `datasphere` commands go through `datasphere_cli_run`. Consumption tools (`login_interactive`, `search_catalog`, `query_*`, …) never call the CLI.
+There is **no** MCP tool per CLI command. Consumption tools (`login_interactive`, `search_catalog`, `query_*`, …) never call the CLI.
+
+## Safeguard configuration
+
+Existing installations now default to read-only. Configure these variables in `.env` or the MCP process environment, then restart the server. Process environment values take precedence over `.env`. `auth_status` reports the effective `safeguard` policy.
+
+```dotenv
+DSP_ALLOW_READ=true
+DSP_ALLOW_WRITE=true
+DSP_ALLOW_DELETE=false
+DSP_ALLOWED_WRITE_SPACES=MY_DEV_SPACE,MY_TEST_SPACE
+DSP_ALLOWED_OBJECT_PREFIXES=ABZ*,HRA
+```
+
+This example allows reading all SAP-authorized Spaces and creating/updating objects only in `MY_DEV_SPACE` or `MY_TEST_SPACE`, and only if their technical names start with `ABZ` or `HRA`. Deletion stays blocked. Both the Space and name rule must match.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DSP_ALLOW_READ` | `true` | Allow catalog, metadata, OData and CLI reads, including cached data |
+| `DSP_ALLOW_WRITE` | `false` | Allow object create/update, including their automatic deployment |
+| `DSP_ALLOW_DELETE` | `false` | Independently allow object deletion |
+| `DSP_ALLOWED_WRITE_SPACES` | empty | Exact, case-sensitive Space IDs allowed for both write and delete; comma-separated; empty allows none |
+| `DSP_ALLOWED_OBJECT_PREFIXES` | empty | Optional case-sensitive prefixes for create/update/delete; comma-separated; empty means no name restriction |
+
+Booleans accept only `true` or `false`; malformed values stop startup. Space IDs accept letters, digits and underscores, with no wildcard. `DSP_SPACE_ID` is still only a consumption default, never a write authorization. To enable deletion in the listed Spaces, explicitly set `DSP_ALLOW_DELETE=true`.
+
+### Object naming restrictions
+
+`DSP_ALLOWED_OBJECT_PREFIXES=ABZ*,HRA,Z_TEAM_` permits names such as `ABZ_SALES`, `HRA_EMPLOYEES` and `Z_TEAM_VIEW`. `OTHER_VIEW`, `X_ABZ_SALES` and `abz_sales` are blocked for mutations. `ABZ*` and `ABZ` are equivalent prefix matches; `HRA` also permits `HRA1`. Use `HRA_` if the underscore must follow the prefix. Spaces around entries are trimmed and duplicates removed. A bare `*`, internal wildcards, empty entries and other invalid patterns stop startup. This setting applies equally to every allowed write Space and does not restrict reads.
+
+Deletion checks the explicit `--technical-name`. Create/update check the names inside JSON from exactly one `--file-path` or `--input`; a matching filename alone is insufficient. Every submitted name must match, including helper definitions and keys in `businessLayerDefinitions`, `editorSettings` and `sharing`. Existing source-object references may use other names because those references do not submit a new definition of the source.
+
+With naming restrictions enabled, supported object roots are `definitions`, `dataflows`, `transformationflows` and `taskchains`, with the appropriate root required for the command. Metadata fields `meta`, `version` and `$version` are accepted. Unknown sections (including `i18n` and `namespace`), unsupported export formats, malformed JSON and missing/ambiguous object names are rejected rather than passed through unchecked. The CLI executes a private snapshot of the validated JSON, also on a retry; later changes to the original input file cannot change that payload.
+
+The CLI bridge accepts `objects <type> list/read/create/update/delete` and `spaces list/read`. An explicit `--space` (or `-y`) is mandatory except for `spaces list`. Use long options: short flags such as `-F` have different meanings per command and are rejected. Duplicate options, unknown commands/options, credential overrides and tenant overrides are rejected before authentication or execution. Administrative commands, task execution, bulk Space imports and standalone deployment commands are blocked, even when write/delete is enabled. The internal CLI cache initialization retry remains available. `--force` is injected only for authorized object deletions.
+
+This is a safeguard for operations through this MCP, not a replacement for SAP permissions. The Space restriction checks the target of the command; it does not analyze dependencies or cross-Space sharing inside object definitions. Direct CLI use outside the MCP is unaffected. Authentication/status and local logout/cache maintenance remain available with reads disabled.
+
+Run `npm test` for the build and offline safeguard checks. No tenant changes are made by these tests.
 
 ## Requirements
 

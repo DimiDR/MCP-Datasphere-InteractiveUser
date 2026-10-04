@@ -13,7 +13,7 @@ There is no MCP tool per CLI command (no `spaces_list`, no `objects_views_create
 
 1. Call `login_interactive` (browser OAuth, stores `.token.json`).
 2. CLI tools refresh that token and write a **temporary** secrets file (`tenantUrl` + `access_token` + client fields).
-3. The runner spawns `node …/terminal.js` with your argv, then appends `--host`, `--secrets-file`, and `--force` (required by the CLI parser).
+3. The runner validates permissions, command and target Space before authentication, then spawns `node …/terminal.js` with normalized argv and injected `--host` and `--secrets-file`. Only authorized object deletions receive `--force`.
 4. The temp file is deleted afterward.
 
 Do **not** run `datasphere login` in parallel — it uses the same `localhost:8080` callback. Session ownership stays with this MCP.
@@ -46,24 +46,27 @@ Examples:
 ["objects", "views", "create", "--space", "MYSPACE", "--file-path", "view.json"]
 ```
 
-```json
-["job-status", "get", "--job-id", "<id>"]
-```
-
 ## Guardrails
 
-Blocked via the runner (use MCP auth tools instead):
+See [Safeguard configuration](../README.md#safeguard-configuration). The default is read-only. Object create/update require `DSP_ALLOW_WRITE=true`; delete requires `DSP_ALLOW_DELETE=true`. Both require the explicit target Space in `DSP_ALLOWED_WRITE_SPACES`. `DSP_ALLOW_READ=false` blocks CLI and consumption reads, including cache hits.
 
-- `login` / `logout`
-- `config secrets reset`
+Multiple Spaces and naming conventions can be combined:
 
-Stripped if the caller passes them (MCP injects its own):
+```dotenv
+DSP_ALLOW_READ=true
+DSP_ALLOW_WRITE=true
+DSP_ALLOW_DELETE=false
+DSP_ALLOWED_WRITE_SPACES=DEV_SPACE,TEST_SPACE
+DSP_ALLOWED_OBJECT_PREFIXES=ABZ*,HRA
+```
 
-- `--secrets-file` / `-s`
-- `--access-token` / `-a`
-- `--client-id` / `-c` / `--client-secret` / `-C`
-- `--host` / `-H`
-- `--force` / `-F`
+Only objects whose technical names start with `ABZ` or `HRA` can be created/updated in those two Spaces. Set `DSP_ALLOW_DELETE=true` to permit deletion under the same restrictions. Matching is case-sensitive; `ABZ` and `ABZ*` are equivalent. An empty prefix setting disables only the name restriction, not the Space or operation checks.
+
+With prefixes configured, delete requires `--technical-name`. Create/update require exactly one JSON payload (`--file-path` or `--input`). All submitted object and auxiliary definition names are checked, and the CLI receives a private snapshot of the checked JSON. Unknown payload sections/formats are blocked. See [Object naming restrictions](../README.md#object-naming-restrictions) for supported sections and examples. Reads are unaffected by prefixes.
+
+Only `objects <type> list/read/create/update/delete` and `spaces list/read` are approved. Other commands, including admin, task execution, job status, login/logout and config commands, are blocked. The internal cache initialization retry is an implementation exception.
+
+Use explicit `--space` (or `-y`), except for `spaces list`. Only supported long options are accepted otherwise. Duplicates, unknown options, tenant/credential overrides and ambiguous short flags are rejected, not silently removed. For example, use `--file-path`, never `-F`. Policy is reported by `auth_status`; restart after changing environment values.
 
 Stdout/stderr are UTF-8 decoded, token-like values redacted, and large dumps truncated.
 

@@ -1,6 +1,7 @@
 import { XMLParser } from "fast-xml-parser";
 import { cacheKey, clearCache, getCacheStats, metadataCache } from "./cache.js";
 import { config } from "./config.js";
+import { assertOperation } from "./policy.js";
 import { dspFetch } from "./http.js";
 import { authStatus, getValidAccessToken, loadToken } from "./oauth.js";
 
@@ -40,6 +41,7 @@ export async function dspGetJson(
   path: string,
   params?: Record<string, string | number | boolean | undefined>,
 ): Promise<DspJson> {
+  assertOperation(config.policy, "read");
   const url = buildUrl(path, params);
   const res = await dspFetch(url, { headers: await authHeaders("application/json") });
   const text = await res.text();
@@ -59,6 +61,7 @@ export async function dspGetText(
   path: string,
   accept = "application/xml",
 ): Promise<{ status: number; text: string; url: string }> {
+  assertOperation(config.policy, "read");
   const url = buildUrl(path);
   const res = await dspFetch(url, { headers: await authHeaders(accept) });
   const text = await res.text();
@@ -226,6 +229,7 @@ export function parseAnalyticalMetadata(xml: string): {
 }
 
 export async function listSpaces(includeDetails = false): Promise<unknown> {
+  assertOperation(config.policy, "read");
   const key = cacheKey(["catalog", "spaces", includeDetails ? "full" : "summary"]);
   const { value: data } = await metadataCache.getOrFetch(key, () =>
     dspGetJson("/api/v1/datasphere/consumption/catalog/spaces"),
@@ -315,6 +319,7 @@ export async function getAssetDetails(spaceId: string, assetId: string): Promise
 
 /** Client-side catalog search (consumption search endpoint is often 404). */
 export async function searchCatalog(query: string, top = 50): Promise<DspJson> {
+  assertOperation(config.policy, "read");
   const key = cacheKey(["catalog", "assets", "all"]);
   const { value: data, cache_hit } = await metadataCache.getOrFetch(key, () =>
     dspGetJson("/api/v1/datasphere/consumption/catalog/assets", { $top: 500, $skip: 0 }),
@@ -347,6 +352,7 @@ export async function getAnalyticalMetadata(
   spaceId: string,
   assetId: string,
 ): Promise<ParsedAnalyticalMetadata> {
+  assertOperation(config.policy, "read");
   const key = cacheKey(["analytical", "metadata", spaceId, assetId]);
   const { value } = await metadataCache.getOrFetch(key, async () => {
     const servicePath = `/api/v1/datasphere/consumption/analytical/${encodeURIComponent(spaceId)}/${encodeURIComponent(assetId)}`;
@@ -357,6 +363,7 @@ export async function getAnalyticalMetadata(
 }
 
 async function fetchAnalyticalService(spaceId: string, assetId: string): Promise<DspJson> {
+  assertOperation(config.policy, "read");
   const key = cacheKey(["analytical", "service", spaceId, assetId]);
   const servicePath = `/api/v1/datasphere/consumption/analytical/${encodeURIComponent(spaceId)}/${encodeURIComponent(assetId)}`;
   const { value } = await metadataCache.getOrFetch(key, () => dspGetJson(`${servicePath}/`));

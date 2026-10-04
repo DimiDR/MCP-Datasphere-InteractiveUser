@@ -1,3 +1,4 @@
+import { assertOperation } from "./policy.js";
 import { analyticalDataUrl, config } from "./config.js";
 import {
   fetchAnalyticalService,
@@ -200,6 +201,7 @@ async function buildAutoSelect(spaceId: string, assetId: string): Promise<string
 }
 
 export async function queryAnalyticalModel(options?: QueryOptions): Promise<QueryResult> {
+  assertOperation(config.policy, "read");
   const { spaceId, assetId } = requireSpaceAsset(
     options?.spaceId,
     options?.assetId,
@@ -238,6 +240,7 @@ export async function getAnalyticalFields(options?: {
   spaceId?: string;
   assetId?: string;
 }): Promise<DspJson> {
+  assertOperation(config.policy, "read");
   const { spaceId, assetId } = requireSpaceAsset(
     options?.spaceId,
     options?.assetId,
@@ -275,6 +278,7 @@ export async function getAnalyticalServiceDocument(options?: {
   spaceId?: string;
   assetId?: string;
 }): Promise<unknown> {
+  assertOperation(config.policy, "read");
   const { spaceId, assetId } = requireSpaceAsset(
     options?.spaceId,
     options?.assetId,
@@ -288,6 +292,7 @@ export async function listRelationalEntities(options?: {
   assetId?: string;
   top?: number;
 }): Promise<DspJson> {
+  assertOperation(config.policy, "read");
   const { spaceId, assetId } = requireSpaceAsset(
     options?.spaceId,
     options?.assetId,
@@ -336,6 +341,7 @@ export async function queryRelationalEntity(options: {
   skip?: number;
   count?: boolean;
 }): Promise<QueryResult> {
+  assertOperation(config.policy, "read");
   const { spaceId, assetId } = requireSpaceAsset(
     options.spaceId,
     options.assetId,
@@ -359,6 +365,7 @@ export async function warmCache(options?: {
   spaceId?: string;
   assetIds?: string[];
 }): Promise<DspJson> {
+  assertOperation(config.policy, "read");
   const spaceId = options?.spaceId?.trim() || config.datasphere.spaceId;
   if (!spaceId) {
     throw new Error("Provide space_id or set DSP_SPACE_ID in .env.");

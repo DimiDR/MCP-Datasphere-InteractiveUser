@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import "./http.js";
+import { parsePolicy } from "./policy.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const envPath = join(root, ".env");
@@ -20,6 +21,7 @@ function required(name: string, value: string | undefined): string {
 }
 
 export const config = {
+  policy: parsePolicy(process.env),
   root,
   tokenFile: join(root, ".token.json"),
   oauth: {

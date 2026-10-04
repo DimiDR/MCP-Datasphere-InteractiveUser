@@ -75,6 +75,7 @@ server.tool("auth_status", "Show Interactive User OAuth token status and configu
       client_id: config.oauth.clientId,
       redirect_uri: config.oauth.redirectUri,
       secret_configured: Boolean(process.env.DSP_OAUTH_CLIENT_SECRET?.trim()),
+      safeguard: config.policy,
       cache: getCacheStats(),
     });
   } catch (e) {
@@ -414,7 +415,7 @@ server.tool(
 
 server.tool(
   "datasphere_cli_run",
-  "Run ONE official datasphere CLI command via argv (design-time/admin). ONE OF ONLY TWO CLI tools — pass args as a string array after `datasphere`, e.g. [\"spaces\",\"list\"] or [\"objects\",\"views\",\"create\",\"--space\",\"X\",\"--file-path\",\"view.json\"]. Uses this MCP's Interactive token (temp secrets file); do not pass secrets/login. For rows use query_analytical_model / query_relational_entity. CSN shapes: cli-knowledge/csn-structure/; examples: cli-knowledge/examples/; commands/pitfalls: cli-knowledge/logic/. Graphical views need editorSettings.uiModel or the Data Builder canvas stays empty (tool returns warnings[]). login/logout/config secrets reset are blocked.",
+  "Run ONE approved official datasphere CLI command via argv. Safeguard: objects <type> list/read/create/update/delete and spaces list/read only; explicit --space required except spaces list. Use long options (or -y for space). DSP_ALLOW_READ/WRITE/DELETE, DSP_ALLOWED_WRITE_SPACES (comma-separated) and optional DSP_ALLOWED_OBJECT_PREFIXES (e.g. ABZ*,HRA) are enforced before execution. Name restrictions apply to create/update payload definitions and delete technical names; all submitted objects must match. Reads are unaffected by name restrictions. ONE OF ONLY TWO CLI tools — pass args as a string array after `datasphere`, e.g. [\"spaces\",\"list\"] or [\"objects\",\"views\",\"create\",\"--space\",\"X\",\"--file-path\",\"view.json\"]. Uses this MCP's Interactive token (temp secrets file); do not pass secrets/login. For rows use query_analytical_model / query_relational_entity. CSN shapes: cli-knowledge/csn-structure/; examples: cli-knowledge/examples/; commands/pitfalls: cli-knowledge/logic/. Graphical views need editorSettings.uiModel or the Data Builder canvas stays empty (tool returns warnings[]). login/logout/config secrets reset are blocked.",
   {
     args: z
       .array(z.string())

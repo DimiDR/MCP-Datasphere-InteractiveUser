@@ -10,6 +10,9 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { config } from "./config.js";
+import { authorizeCli } from "./policy.js";
+import { clearCache } from "./cache.js";
+import { checkedObjectPayload, snapshotArgs } from "./object-safeguard.js";
 import {
   authStatus,
   getValidAccessToken,
@@ -17,17 +20,6 @@ import {
 } from "./oauth.js";
 
 const MAX_OUTPUT_CHARS = 200_000;
-const BLOCKED_HEAD = new Set(["login", "logout"]);
-const STRIP_FLAGS = new Set([
-  "--secrets-file",
-  "-s",
-  "--access-token",
-  "-a",
-  "--client-secret",
-  "-C",
-  "--client-id",
-  "-c",
-]);
 
 export type CliRunResult = {
   ok: boolean;
@@ -211,56 +203,6 @@ async function writeSecretsFile(): Promise<{ path: string; cleanup: () => void }
   };
 }
 
-function sanitizeArgs(args: string[]): string[] {
-  if (!Array.isArray(args) || args.length === 0) {
-    throw new Error("args must be a non-empty string array (CLI tokens after `datasphere`).");
-  }
-  if (args.some((a) => typeof a !== "string")) {
-    throw new Error("args must contain only strings — do not pass a shell command string.");
-  }
-
-  const head = args[0]?.toLowerCase();
-  if (BLOCKED_HEAD.has(head)) {
-    throw new Error(
-      `Command "${args[0]}" is blocked. Session is owned by this MCP — use login_interactive / logout.`,
-    );
-  }
-  // config secrets reset
-  if (
-    args[0]?.toLowerCase() === "config" &&
-    args[1]?.toLowerCase() === "secrets" &&
-    args[2]?.toLowerCase() === "reset"
-  ) {
-    throw new Error(
-      "config secrets reset is blocked. Session is owned by this MCP — use logout.",
-    );
-  }
-
-  const out: string[] = [];
-  for (let i = 0; i < args.length; i++) {
-    const a = args[i];
-    const key = a.includes("=") ? a.slice(0, a.indexOf("=")) : a;
-    if (STRIP_FLAGS.has(key)) {
-      if (!a.includes("=") && i + 1 < args.length && !args[i + 1].startsWith("-")) {
-        i += 1; // skip value
-      }
-      continue;
-    }
-    // Also strip --host / -H; we inject host ourselves
-    if (key === "--host" || key === "-H") {
-      if (!a.includes("=") && i + 1 < args.length && !args[i + 1].startsWith("-")) {
-        i += 1;
-      }
-      continue;
-    }
-    if (key === "--force" || key === "-F") {
-      continue; // we inject --force
-    }
-    out.push(a);
-  }
-  return out;
-}
-
 function spawnCli(
   entry: { command: string; argsPrefix: string[] },
   cliArgs: string[],
@@ -278,7 +220,7 @@ function spawnCli(
     config.datasphere.tenantUrl,
     "--secrets-file",
     options.secretsPath,
-    "--force",
+    ...(cliArgs[0] === "objects" && cliArgs[2] === "delete" && !cliArgs.includes("--force") ? ["--force"] : []),
   ];
 
   return new Promise((resolvePromise) => {
@@ -498,19 +440,18 @@ export async function datasphereCliRun(options: {
   workingDirectory?: string;
   timeoutSeconds?: number;
 }): Promise<CliRunResult> {
-  const sanitized = sanitizeArgs(options.args);
-  const entry = resolveDatasphereEntry();
-  if (!entry) {
-    throw new Error(
-      "datasphere CLI not found. Install @sap/datasphere-cli globally or set DSP_CLI_PATH.",
-    );
-  }
+  const sanitized = authorizeCli(config.policy, options.args);
 
   const cwd = options.workingDirectory
     ? resolve(options.workingDirectory)
     : config.root;
   if (!existsSync(cwd)) {
     throw new Error(`working_directory does not exist: ${cwd}`);
+  }
+  const payload = checkedObjectPayload(config.policy, sanitized, cwd);
+  const entry = resolveDatasphereEntry();
+  if (!entry) {
+    throw new Error("datasphere CLI not found. Install @sap/datasphere-cli globally or set DSP_CLI_PATH.");
   }
 
   const timeoutSeconds = Math.min(
@@ -520,10 +461,16 @@ export async function datasphereCliRun(options: {
   const timeoutMs = timeoutSeconds * 1000;
 
   const secrets = await writeSecretsFile();
+  const payloadPath = join(dirname(secrets.path), "checked-object.json");
   try {
-    const preWarnings = graphicalViewUiModelWarnings(sanitized, cwd);
+    let executionArgs = sanitized;
+    if (payload !== undefined) {
+      writeFileSync(payloadPath, payload, { encoding: "utf8", mode: 0o600 });
+      executionArgs = snapshotArgs(sanitized, payloadPath);
+    }
+    const preWarnings = graphicalViewUiModelWarnings(executionArgs, cwd);
 
-    let result = await spawnCli(entry, sanitized, {
+    let result = await spawnCli(entry, executionArgs, {
       cwd,
       timeoutMs,
       secretsPath: secrets.path,
@@ -542,7 +489,7 @@ export async function datasphereCliRun(options: {
         secretsPath: secrets.path,
       });
       if (init.exitCode === 0 && !init.timedOut) {
-        result = await spawnCli(entry, sanitized, {
+        result = await spawnCli(entry, executionArgs, {
           cwd,
           timeoutMs,
           secretsPath: secrets.path,
@@ -560,6 +507,14 @@ export async function datasphereCliRun(options: {
       warnings: preWarnings.length ? preWarnings : undefined,
     });
   } finally {
-    secrets.cleanup();
+    try {
+      if (payload !== undefined && existsSync(payloadPath)) unlinkSync(payloadPath);
+    } finally {
+      secrets.cleanup();
+    }
+    // A failed or timed-out mutation may still have changed backend state.
+    if (sanitized[0] === "objects" && ["create", "update", "delete"].includes(sanitized[2])) {
+      clearCache();
+    }
   }
 }
