@@ -54,6 +54,8 @@ With `DSP_ALLOW_READ_OBJECT_PREFIXES`, object names are checked before the reque
 
 Window: `date` (`YYYY-MM-DD`, one local day in `time_zone`, default `Europe/Berlin`, DST-safe) or `from`/`to` (ISO 8601); without either, today until now. Max 31 days. The result contains `status_counts` for all runs in the window, `runs` (newest first, filtered by `statuses`, max `max_runs`, default 200), `parent_task_chains`, per-object `errors` and, with `include_csv`, a semicolon-separated CSV string. The run user is omitted (personal data). Read prefixes apply as for the single-object tools; objects outside them appear in `errors`.
 
+Runs reported by SAP as `RUNNING` with a valid `end_time` are marked with `status_flags: ["RUNNING_WITH_END_TIME"]` and a `status_note`, including with `details: "none"`. SAP status and raw timing values remain unchanged. The end time and runtime may refer to a previous attempt after a retry, not completion or duration of the current attempt; the flag alone does not confirm a retry. CSV exports append `status_flags` and `status_note` columns.
+
 Examples (chat): "Which replication flows failed yesterday in SP_X?" → `date` + `statuses: ["FAILED"]`. "What ran between 14:00 and 15:00?" → `from`/`to`, `details: "none"`. "Export today's runs as CSV" → `include_csv: true`.
 
 `search_api_discovery` searches the tenant's OpenAPI discovery document, e.g. `pattern: "replication|metric"` or `schema: "ReplicationFlowStatus"`, to locate endpoints not yet covered by a tool. It returns API metadata only.

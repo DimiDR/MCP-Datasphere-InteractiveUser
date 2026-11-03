@@ -233,6 +233,39 @@ test("space runs: enumerates flows, filters window and statuses, loads details o
     assert.equal(limited.returned_runs, 1);
     assert.equal(limited.runs_truncated, true);
 
+    // SAP can retain a previous attempt's end time while the same log is RUNNING again.
+    histories.HRA_RF2[0] = {
+      logId: 4, objectId: "HRA_RF2", status: "RUNNING",
+      startTime: "2026-10-30T08:00:00Z", endTime: "2026-10-30T09:00:00Z", runTime: 3600000,
+    };
+    const flagged = await m.getSpaceRunsInWindow({
+      spaceId: "DEV", date: "2026-10-30", objectIds: ["SOURCE_RF1", "HRA_RF2"],
+      statuses: ["RUNNING"], details: "none", includeCsv: true,
+    });
+    assert.deepEqual(flagged.status_counts, { COMPLETED: 1, FAILED: 1, RUNNING: 1 });
+    assert.equal(flagged.returned_runs, 1);
+    assert.equal(flagged.runs[0].status, "RUNNING");
+    assert.equal(flagged.runs[0].end_time, histories.HRA_RF2[0].endTime);
+    assert.equal(flagged.runs[0].runtime_seconds, 3600);
+    assert.deepEqual(flagged.runs[0].status_flags, ["RUNNING_WITH_END_TIME"]);
+    assert.match(flagged.runs[0].status_note, /do not interpret them as completion/);
+    assert.match(flagged.runs[0].status_note, /retry is not confirmed/);
+    assert.match(flagged.csv, /"status_flags";"status_note"/);
+    assert.match(flagged.csv, /"RUNNING_WITH_END_TIME";"SAP reports RUNNING/);
+    assert.deepEqual(detailCalls, ["2"]); // Flagging needs no additional detail request.
+
+    for (const [status, endTime] of [
+      ["RUNNING", undefined], ["RUNNING", ""], ["RUNNING", "invalid"],
+      ["COMPLETED", "2026-10-30T09:00:00Z"], ["FAILED", "2026-10-30T09:00:00Z"],
+    ]) {
+      Object.assign(histories.HRA_RF2[0], { status, endTime });
+      const unflagged = await m.getSpaceRunsInWindow({
+        spaceId: "DEV", date: "2026-10-30", objectIds: ["HRA_RF2"], details: "none",
+      });
+      assert.equal(unflagged.runs[0].status_flags, undefined);
+      assert.equal(unflagged.runs[0].status_note, undefined);
+    }
+
     await assert.rejects(() => m.getSpaceRunsInWindow({ spaceId: "DEV/x" }), /Safeguard:/);
     config.policy = parsePolicy({ DSP_ALLOW_READ: "false" });
     await assert.rejects(() => m.getSpaceRunsInWindow({ spaceId: "DEV" }), /DSP_ALLOW_READ/);

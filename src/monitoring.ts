@@ -531,12 +531,19 @@ export async function getSpaceRunsInWindow(options: {
       }
     }
     const log = detailLog ?? run;
+    const status = log.status ?? run.status;
+    const runningWithEndTime = String(status ?? "").toUpperCase() === "RUNNING" &&
+      typeof run.endTime === "string" && !Number.isNaN(Date.parse(run.endTime));
     return {
       log_id: run.logId,
       object_id: run.objectId,
       application_id: log.applicationId ?? run.applicationId,
       activity: log.activity ?? run.activity,
-      status: log.status ?? run.status,
+      status,
+      ...(runningWithEndTime ? {
+        status_flags: ["RUNNING_WITH_END_TIME"],
+        status_note: "SAP reports RUNNING with an end time. The end time and runtime may belong to a previous attempt (for example after a retry); do not interpret them as completion or duration of the current attempt. A retry is not confirmed by this flag. SAP status and raw timing values are preserved.",
+      } : {}),
       start_time: run.startTime,
       end_time: run.endTime,
       start_local: localTime(run.startTime, window.timeZone),
@@ -569,10 +576,11 @@ export async function getSpaceRunsInWindow(options: {
   };
   if (options.includeCsv) {
     const header = ["log_id", "object_id", "application_id", "status", `start (${window.timeZone})`, `end (${window.timeZone})`,
-      "runtime_seconds", "parent_task_chain", "messages"];
+      "runtime_seconds", "parent_task_chain", "messages", "status_flags", "status_note"];
     result.csv = [header.map(csvCell).join(";"), ...rows.map((r) => [
       r.log_id, r.object_id, r.application_id, r.status, r.start_local, r.end_local, r.runtime_seconds, r.parent_object_id,
       (r.messages ?? []).map((m) => `${m.severity}: ${m.text}`).join(" | "),
+      (r.status_flags ?? []).join(" | "), r.status_note,
     ].map(csvCell).join(";"))].join("\r\n");
   }
   return result;
