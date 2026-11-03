@@ -43,4 +43,22 @@ Consumption requests should include:
 
 ## Token storage
 
+### Import existing tokens
+
+Set `DSP_ACCESS_TOKEN` and optionally `DSP_REFRESH_TOKEN` in `.env`, then restart
+the MCP. The access token must belong to the configured tenant; the refresh token
+must belong to the configured OAuth client. No browser callback is needed for
+token import or refresh.
+
+On first use, changed environment tokens replace `.token.json`. A hash identifies
+the imported pair so subsequent restarts retain refreshed tokens rather than
+re-importing an old, possibly rotated refresh token. Remove environment tokens
+when switching back to browser login. Logout suppresses re-import for the current
+process; restarting with environment tokens still configured can import them again.
+
+JWT expiry is read from `exp` with a 60-second safety margin; this is not signature
+validation. For opaque tokens, set `DSP_ACCESS_TOKEN_EXPIRES_AT` to an ISO date-time.
+Unknown expiry is treated as expired and requires a refresh token. Tokens and
+`.token.json` are secrets and must not be committed or shared.
+
 Tokens are stored in `.token.json` (gitignored). Access tokens are short-lived; refresh tokens are used automatically when present.

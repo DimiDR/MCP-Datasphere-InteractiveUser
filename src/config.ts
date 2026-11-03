@@ -46,6 +46,8 @@ export const config = {
   datasphere: {
     tenantUrl: required("DSP_TENANT_URL", process.env.DSP_TENANT_URL),
     tenantId: process.env.DSP_TENANT_ID?.trim() || "",
+    /** Host for Tasks / Replication Flow REST APIs; SAP docs mention a separate `<tenant>.api.<region>` host. */
+    apiUrl: (process.env.DSP_API_URL?.trim() || required("DSP_TENANT_URL", process.env.DSP_TENANT_URL)).replace(/\/$/, ""),
     spaceId: process.env.DSP_SPACE_ID?.trim() || "",
     assetId: process.env.DSP_ASSET_ID?.trim() || "",
   },

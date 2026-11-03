@@ -27,6 +27,30 @@ import {
 } from "./datasphere.js";
 import { authStatus, clearToken, loginInteractive } from "./oauth.js";
 import { datasphereCliRun, datasphereCliStatus } from "./cli.js";
+import {
+  cancelTaskChain,
+  controlReplicationFlow,
+  controlReplicationFlowObject,
+  getConnection,
+  getReplicationFlowStatus,
+  getReplicationFlowRunDetails,
+  getSpaceRunsInWindow,
+  getTaskLog,
+  getTaskLogHistory,
+  getUser,
+  listCertificates,
+  listConnections,
+  listReplicationFlows,
+  listUsers,
+  replicationFlowActions,
+  replicationObjectActions,
+  retryTaskChain,
+  runDetailModes,
+  runObjectTypes,
+  runTaskChain,
+  searchApiDiscovery,
+  validateConnection,
+} from "./monitoring.js";
 
 function text(data: unknown) {
   return {
@@ -392,6 +416,300 @@ server.tool(
           count,
         }),
       );
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+// ── Monitoring (read-only REST: Tasks API, Replication Flow API) ──────────
+
+server.tool(
+  "get_task_log_history",
+  "Run history (task logs) of one object, e.g. a task chain, view persistence or flow, via the Tasks REST API. Use the returned logId with get_task_log for step details. Requires a scoped role with Data Warehouse Data Integration (-R------) on the Space.",
+  {
+    space_id: z.string(),
+    object_id: z.string().describe("Technical name of the task chain / view / flow."),
+  },
+  async ({ space_id, object_id }) => {
+    try {
+      return text(await getTaskLogHistory(space_id, object_id));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "get_task_log",
+  "Details of one task run by log ID via the Tasks REST API. detail: 'status' (status only), 'details' (default; messages and task chain child nodes), 'extended' (all message details). Does NOT include replication object Metrics / Delta Records Count. Use get_replication_flow_run_details to combine task logs with current dataset status and explicit metrics availability.",
+  {
+    space_id: z.string(),
+    log_id: z.union([z.string(), z.number().int()]).transform(String),
+    detail: z.enum(["status", "details", "extended"]).optional(),
+  },
+  async ({ space_id, log_id, detail }) => {
+    try {
+      return text(await getTaskLog(space_id, log_id, detail ?? "details"));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "list_replication_flows",
+  "List replication flows in a Space via the Replication Flow REST API (read-only).",
+  { space_id: z.string() },
+  async ({ space_id }) => {
+    try {
+      return text(await listReplicationFlows(space_id));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "get_replication_flow_status",
+  "Run status of one replication flow via the Replication Flow REST API (read-only; start/stop/pause are not exposed).",
+  {
+    space_id: z.string(),
+    technical_name: z.string(),
+  },
+  async ({ space_id, technical_name }) => {
+    try {
+      return text(await getReplicationFlowStatus(space_id, technical_name));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+// ── Connections (read-only REST) ──────────────────────────────────────────
+
+server.tool(
+  "get_replication_flow_run_details",
+  "Read a replication flow run by log ID: extended task messages plus CURRENT flow/dataset status. Current status is not historical metrics for the requested log. Delta Records Count is explicitly unavailable until the UI Metrics endpoint is verified; never interpret deltaloadCount as records or missing as zero.",
+  {
+    space_id: z.string(),
+    log_id: z.union([z.string(), z.number().int()]).transform(String),
+  },
+  async ({ space_id, log_id }) => {
+    try {
+      return text(await getReplicationFlowRunDetails(space_id, log_id));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "get_space_runs_in_window",
+  "Overview of all task runs in a Space within a time window (e.g. 'what failed today in SP_X?'). Lists the Space's replication flows / task chains (or uses object_ids), reads each object's task log history in parallel, keeps runs overlapping the window, and returns status counts, parent task chains and the non-INFO messages of problem runs. Use this instead of calling get_task_log_history per object. Window: 'date' (one local day in time_zone) or 'from'/'to' (ISO 8601); default = today so far. Max 31 days, 2000 objects. Run user is omitted. include_csv adds a semicolon-separated CSV string.",
+  {
+    space_id: z.string(),
+    date: z.string().optional().describe("Local calendar day YYYY-MM-DD in time_zone. Do not combine with from/to."),
+    from: z.string().optional().describe("ISO 8601 start, e.g. 2026-10-30T13:00:00+01:00. Default: local midnight today."),
+    to: z.string().optional().describe("ISO 8601 end. Default: now."),
+    time_zone: z.string().optional().describe("IANA time zone for 'date' and local times in the output. Default Europe/Berlin."),
+    object_types: z.array(z.enum(runObjectTypes)).optional()
+      .describe("Object types to enumerate when object_ids is not given. Default: replication-flows, task-chains. Types other than replication-flows are listed via the datasphere CLI."),
+    object_ids: z.array(z.string()).optional().describe("Check only these technical names (skips enumeration)."),
+    statuses: z.array(z.string()).optional().describe("Return only runs with these statuses, e.g. ['FAILED']. status_counts always covers all runs."),
+    details: z.enum(runDetailModes).optional()
+      .describe("Load extended logs for messages: 'problems' (default; runs not COMPLETED/RUNNING), 'all', or 'none'."),
+    max_runs: z.number().int().min(1).max(1000).optional().describe("Max runs returned (newest first). Default 200."),
+    include_csv: z.boolean().optional(),
+  },
+  async ({ space_id, date, from, to, time_zone, object_types, object_ids, statuses, details, max_runs, include_csv }) => {
+    try {
+      return text(await getSpaceRunsInWindow({
+        spaceId: space_id, date, from, to, timeZone: time_zone, objectTypes: object_types, objectIds: object_ids,
+        statuses, details, maxRuns: max_runs, includeCsv: include_csv,
+      }));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "search_api_discovery",
+  "Search the tenant's API discovery document (GET /dwaas-core/api/v1/discovery on DSP_TENANT_URL) for endpoint paths, operation summaries and schema names matching a regex (case-insensitive), e.g. 'replication|metric'. Pass schema to get one schema definition (e.g. 'ReplicationFlowStatus'). Returns API metadata only, no object data. Useful to locate monitoring endpoints not covered by the other tools.",
+  {
+    pattern: z.string().min(1).max(200),
+    schema: z.string().optional().describe("Exact schema name from components.schemas to return in full."),
+    max_results: z.number().int().min(1).max(500).optional(),
+  },
+  async ({ pattern, schema, max_results }) => {
+    try {
+      return text(await searchApiDiscovery({ pattern, schema, maxResults: max_results }));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "list_connections",
+  "List connections of a Space via the Connections REST API (read-only; credential-like fields are masked).",
+  { space_id: z.string() },
+  async ({ space_id }) => {
+    try {
+      return text(await listConnections(space_id));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "get_connection",
+  "Read the JSON definition of one connection (SAP returns it without credentials; credential-like fields are additionally masked).",
+  { space_id: z.string(), connection_name: z.string().describe("Technical name from list_connections.") },
+  async ({ space_id, connection_name }) => {
+    try {
+      return text(await getConnection(space_id, connection_name));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "validate_connection",
+  "Run SAP's live connectivity check for one connection (changes nothing). Useful when replication flows or task chains fail on a source. Requires a scoped role with Data Warehouse Connection privileges on the Space.",
+  { space_id: z.string(), connection_name: z.string() },
+  async ({ space_id, connection_name }) => {
+    try {
+      return text(await validateConnection(space_id, connection_name));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+// ── Certificates and users (read-only REST) ───────────────────────────────
+
+server.tool(
+  "list_certificates",
+  "List TLS server certificates uploaded to the tenant (read-only). Requires a global role such as DW Administrator.",
+  {},
+  async () => {
+    try {
+      return text(await listCertificates());
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "list_users",
+  "List tenant users and their roles via the SCIM 2.0 API (read-only; returns personal data). Requires a global user-administration role. filter uses SCIM syntax, e.g. 'userName eq \"JDOE\"' or 'emails.value co \"@example.com\"'.",
+  {
+    filter: z.string().optional(),
+    start_index: z.number().int().min(1).optional(),
+    count: z.number().int().min(1).max(500).optional(),
+    sort_by: z.string().optional(),
+    sort_order: z.enum(["ascending", "descending"]).optional(),
+  },
+  async ({ filter, start_index, count, sort_by, sort_order }) => {
+    try {
+      return text(await listUsers({ filter, startIndex: start_index, count: count ?? 50, sortBy: sort_by, sortOrder: sort_order }));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "get_user",
+  "Read one tenant user by SCIM user ID via the SCIM 2.0 API (read-only; returns personal data).",
+  { user_id: z.string().describe("SCIM user ID from list_users.") },
+  async ({ user_id }) => {
+    try {
+      return text(await getUser(user_id));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+// ── Task chain / replication flow control (write-gated REST) ──────────────
+
+const controlNote =
+  "WRITE: requires DSP_ALLOW_WRITE=true, the Space in DSP_ALLOWED_WRITE_SPACES and a name matching DSP_ALLOW_WRITE_OBJECT_PREFIXES (if set); SAP additionally requires Data Warehouse Data Integration (--U-----) and authorized consent. Only call when the user explicitly asks.";
+
+server.tool(
+  "run_task_chain",
+  `Start a task chain run via the Tasks REST API. Returns the new logId; follow up with get_task_log. ${controlNote}`,
+  {
+    space_id: z.string(),
+    task_chain: z.string(),
+    input_parameters: z.record(z.string()).optional().describe("Only for chains defined with input parameters."),
+  },
+  async ({ space_id, task_chain, input_parameters }) => {
+    try {
+      return text(await runTaskChain(space_id, task_chain, input_parameters));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "retry_task_chain",
+  `Retry the last run of a task chain (only if it FAILED or was CANCELED). ${controlNote}`,
+  { space_id: z.string(), task_chain: z.string() },
+  async ({ space_id, task_chain }) => {
+    try {
+      return text(await retryTaskChain(space_id, task_chain));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "cancel_task_chain",
+  `Cancel a running task chain by its log ID. ${controlNote}`,
+  { space_id: z.string(), log_id: z.union([z.string(), z.number().int()]).transform(String) },
+  async ({ space_id, log_id }) => {
+    try {
+      return text(await cancelTaskChain(space_id, log_id));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "control_replication_flow",
+  `Start, pause, resume or stop a replication flow via the Replication Flow REST API. ${controlNote}`,
+  { space_id: z.string(), technical_name: z.string(), action: z.enum(replicationFlowActions) },
+  async ({ space_id, technical_name, action }) => {
+    try {
+      return text(await controlReplicationFlow(space_id, technical_name, action));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "control_replication_flow_object",
+  `Pause, resume or restart one replication object inside a replication flow. ${controlNote}`,
+  {
+    space_id: z.string(),
+    technical_name: z.string().describe("Replication flow technical name."),
+    object_name: z.string().describe("Technical name of the replication object."),
+    action: z.enum(replicationObjectActions),
+  },
+  async ({ space_id, technical_name, object_name, action }) => {
+    try {
+      return text(await controlReplicationFlowObject(space_id, technical_name, object_name, action));
     } catch (e) {
       return err(e);
     }

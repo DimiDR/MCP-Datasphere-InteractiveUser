@@ -1,5 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { URL } from "node:url";
@@ -14,24 +14,66 @@ export type TokenSet = {
   expires_at?: number;
   scope?: string;
   obtained_at: string;
+  env_token_hash?: string;
 };
 
 let memoryToken: TokenSet | null = null;
+let envTokenChecked = false;
+
+function tokenFromEnvironment(): TokenSet | null {
+  const accessToken = process.env.DSP_ACCESS_TOKEN?.trim();
+  if (!accessToken) return null;
+  const refreshToken = process.env.DSP_REFRESH_TOKEN?.trim();
+  let expiresAt = Date.now(); // Unknown expiry: refresh rather than assume validity.
+  try {
+    const claims = JSON.parse(Buffer.from(accessToken.split(".")[1], "base64url").toString("utf8"));
+    if (typeof claims.exp === "number" && Number.isFinite(claims.exp)) {
+      expiresAt = claims.exp * 1000 - 60_000;
+    }
+  } catch {
+    // Opaque tokens need an explicit expiry or a refresh token.
+  }
+  const explicitExpiry = process.env.DSP_ACCESS_TOKEN_EXPIRES_AT?.trim();
+  if (explicitExpiry) {
+    const parsed = Date.parse(explicitExpiry);
+    if (!Number.isFinite(parsed)) {
+      throw new Error("DSP_ACCESS_TOKEN_EXPIRES_AT must be a valid ISO date-time.");
+    }
+    expiresAt = parsed - 60_000;
+  }
+  return {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    token_type: "Bearer",
+    expires_at: expiresAt,
+    obtained_at: new Date().toISOString(),
+    env_token_hash: createHash("sha256").update(JSON.stringify([accessToken, refreshToken, explicitExpiry])).digest("hex"),
+  };
+}
 
 export function loadToken(): TokenSet | null {
   if (memoryToken && !isExpired(memoryToken)) {
     return memoryToken;
   }
-  if (!existsSync(config.tokenFile)) {
-    return null;
-  }
+  let stored: TokenSet | null = null;
   try {
-    const raw = JSON.parse(readFileSync(config.tokenFile, "utf8")) as TokenSet;
-    memoryToken = raw;
-    return raw;
+    if (existsSync(config.tokenFile)) {
+      stored = JSON.parse(readFileSync(config.tokenFile, "utf8")) as TokenSet;
+    }
   } catch {
-    return null;
+    // An invalid token file can be replaced by environment tokens.
   }
+  if (!envTokenChecked) {
+    const supplied = tokenFromEnvironment();
+    if (supplied && supplied.env_token_hash !== stored?.env_token_hash) {
+      saveToken(supplied);
+      envTokenChecked = true;
+      return memoryToken;
+    }
+    envTokenChecked = true;
+  }
+  memoryToken = stored;
+  return stored;
 }
 
 export function saveToken(token: TokenSet): void {
@@ -50,6 +92,7 @@ export function saveToken(token: TokenSet): void {
 
 export function clearToken(): void {
   memoryToken = null;
+  envTokenChecked = true; // Logout must not immediately re-import environment tokens.
   if (existsSync(config.tokenFile)) {
     unlinkSync(config.tokenFile);
   }
@@ -154,7 +197,7 @@ export async function getValidAccessToken(): Promise<string> {
       "Access token expired and no refresh_token. Call login_interactive again.",
     );
   }
-  token = await refreshAccessToken(token.refresh_token);
+  token = { ...await refreshAccessToken(token.refresh_token), env_token_hash: token.env_token_hash };
   saveToken(token);
   return token.access_token;
 }
@@ -327,7 +370,7 @@ export async function loginInteractive(options?: {
         sendHtml(
           res,
           200,
-          "<h1>Login OK</h1><p>You can close this tab and return to Cursor.</p>",
+          "<h1>Login OK</h1><p>You can close this tab.</p>",
         );
         server.close();
         succeed(exchanged);

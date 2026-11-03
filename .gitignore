@@ -1,6 +1,14 @@
 node_modules/
 dist/
 .env
+.env *
+.env.*
+!.env.example
 .token.json
 *.log
 .DS_Store
+
+env-files/
+
+# Local evaluation output (may contain tenant data)
+/monitoring-*

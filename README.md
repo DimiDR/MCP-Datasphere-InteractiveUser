@@ -9,9 +9,72 @@ Interactive Usage OAuth plus **consumption** catalog / analytical / relational O
 | `datasphere_cli_status` | Is the CLI installed? Is this MCP logged in? |
 | `datasphere_cli_run` | Run approved object CRUD and Space read/list commands as an argv array |
 
-There is **no** MCP tool per CLI command. Consumption tools (`login_interactive`, `search_catalog`, `query_*`, …) never call the CLI.
+There is **no** MCP tool per CLI command. Consumption tools (`login_interactive`, `search_catalog`, `query_*`, …) never call the CLI. The only other tool using it internally is `get_space_runs_in_window`, for read-only `objects <type> list` enumeration.
+
+## Monitoring, connection and admin REST tools
+
+| Tool | REST endpoint |
+|------|---------------|
+| `get_task_log_history` | `GET /api/v1/datasphere/tasks/logs/<space>/objects/<object>` |
+| `get_task_log` | `GET /api/v1/datasphere/tasks/logs/<space>/<logId>` (`detail`: `status` / `details` / `extended`) |
+| `list_replication_flows` | `GET /api/v1/datasphere/spaces/<space>/replicationflows` |
+| `get_replication_flow_status` | `GET /dwaas-core/api/v1/spaces/<space>/replication-flows/<name>/status` on `DSP_TENANT_URL` (verified with tenant discovery) |
+| `get_replication_flow_run_details` | Extended task log + current flow/dataset status; explicit Delta Records Count availability |
+| `get_space_runs_in_window` | All runs of a Space in a time window (aggregates the task log endpoints above, see below) |
+| `search_api_discovery` | `GET /dwaas-core/api/v1/discovery` on `DSP_TENANT_URL`, filtered by regex (paths, summaries, schemas) |
+| `list_connections` | `GET /api/v1/datasphere/spaces/<space>/connections` |
+| `get_connection` | `GET /api/v1/datasphere/spaces/<space>/connections/<name>` |
+| `validate_connection` | `GET /api/v1/datasphere/spaces/<space>/connections/<name>/validation` |
+| `list_certificates` | `GET /api/v1/datasphere/configuration/security/certificates` |
+| `list_users` / `get_user` | `GET /api/v1/scim2/Users` / `GET /api/v1/scim2/Users/<id>` |
+
+Write-gated control tools (same gate as object create/update: `DSP_ALLOW_WRITE=true`, Space in `DSP_ALLOWED_WRITE_SPACES`, name matching `DSP_ALLOW_WRITE_OBJECT_PREFIXES` if set):
+
+| Tool | REST endpoint |
+|------|---------------|
+| `run_task_chain` | `POST /api/v1/datasphere/tasks/chains/<space>/run/<chain>` (optional `inputParameters`) |
+| `retry_task_chain` | `POST /api/v1/datasphere/tasks/chains/<space>/retry/<chain>` |
+| `cancel_task_chain` | `POST /api/v1/datasphere/tasks/chains/<space>/cancel/<logId>` (owning chain is resolved first when write prefixes are set) |
+| `control_replication_flow` | `POST /api/v1/datasphere/spaces/<space>/replication-flows/<name>/<start\|pause\|resume\|stop>` |
+| `control_replication_flow_object` | `POST …/replication-flows/<name>/objects/<object>/<pause-object\|resume-object\|restart-object>` |
+
+Control calls fetch an `x-csrf-token` (with session cookies) from a GET on the same API first. SAP additionally requires Data Warehouse Data Integration (`--U-----`) and, for Interactive Usage, authorized consent. Connection create/edit/delete, certificate upload/delete and SCIM user changes are not exposed.
+
+Sources: [Managing Users via the SCIM 2.0 API](https://help.sap.com/docs/SAP_DATASPHERE/9f804b8efa8043539289f42f372c4862/1ca8c4a9467f43df9ae6d4ed3734f05a.html), [Managing Tasks via the REST API](https://help.sap.com/docs/SAP_DATASPHERE/c8a54ee704e94e15926551293243fd1d/274f2736465c4c48a091c675880502a2.html), [Controlling Replication Flows via API](https://help.sap.com/docs/SAP_DATASPHERE/be5967d099974c69b77f4549425ca4c0/5e60730b5b4c45f49e261af6fdaad72b.html), [Managing Connectivity via the REST API](https://help.sap.com/docs/SAP_DATASPHERE/be5967d099974c69b77f4549425ca4c0/5aafe32418b14f7e99528b49f48bd3ac.html). Task/replication flow reads require a scoped role with Data Warehouse Data Integration (`-R------`) on the Space; no authorized consent is needed for reads. Certificates and users need a global administrator role; user tools return personal data and are not affected by object prefixes. Connection tools use `DSP_TENANT_URL`, mask credential-like fields (SAP already omits credentials) and need the Data Warehouse Connection privilege; `validate_connection` contacts the remote system but changes nothing. Task and replication flow requests go to `DSP_API_URL` (default `DSP_TENANT_URL`); SAP documents a separate `<tenant_id>.api.<regional_host>` host, so set it if calls return 404. Responses are never cached.
+
+With `DSP_ALLOW_READ_OBJECT_PREFIXES`, object names are checked before the request; task logs of other objects are rejected and nested runs (task chain children) of other objects are removed; replication flow and connection lists keep only permitted names (connection names count as object names); `get_task_log` requires `detail` `details` or `extended` so the owning object can be checked. Free-text log messages are not inspected.
+
+### Space-wide run overview
+
+`get_space_runs_in_window` answers questions like "what failed today in `MY_SPACE`?" in one call instead of one `get_task_log_history` call per object:
+
+1. Lists the objects to check: replication flows via REST (falls back to the CLI), task chains / transformation flows / data flows via `datasphere objects <type> list` (`object_types`, default `replication-flows` + `task-chains`). Pass `object_ids` to check specific objects only.
+2. Reads each object's task log history (6 requests in parallel, max 2000 objects) and keeps runs overlapping the window.
+3. Loads the extended log of problem runs (`details`: `problems` = not `COMPLETED`/`RUNNING`, default; `all`; `none`) and returns their non-INFO messages (max 20 per run).
+
+Window: `date` (`YYYY-MM-DD`, one local day in `time_zone`, default `Europe/Berlin`, DST-safe) or `from`/`to` (ISO 8601); without either, today until now. Max 31 days. The result contains `status_counts` for all runs in the window, `runs` (newest first, filtered by `statuses`, max `max_runs`, default 200), `parent_task_chains`, per-object `errors` and, with `include_csv`, a semicolon-separated CSV string. The run user is omitted (personal data). Read prefixes apply as for the single-object tools; objects outside them appear in `errors`.
+
+Examples (chat): "Which replication flows failed yesterday in SP_X?" → `date` + `statuses: ["FAILED"]`. "What ran between 14:00 and 15:00?" → `from`/`to`, `details: "none"`. "Export today's runs as CSV" → `include_csv: true`.
+
+`search_api_discovery` searches the tenant's OpenAPI discovery document, e.g. `pattern: "replication|metric"` or `schema: "ReplicationFlowStatus"`, to locate endpoints not yet covered by a tool. It returns API metadata only.
 
 ## Safeguard configuration
+
+### Replication object metrics limitation
+
+`get_task_log` with `extended` returns all **task message details**, not all UI Metrics.
+`get_replication_flow_run_details` resolves the flow from the authorized log ID and combines
+that historical task log with **current** dataset status (source, target, state, last transfer).
+The latter is not a historical snapshot of the requested run. It preserves the task log if
+the status request fails. `delta_records_count.availability` is explicitly `unavailable`:
+neither verified endpoint exposes the UI's **Delta Records Count**. `deltaloadCount` is not
+that metric and missing must never be reported as zero.
+
+To implement automatic Delta Records Count retrieval, capture the specific request and JSON
+response when opening **Run Details → Object → Metrics** in the browser Network tab.
+Provide only the request path/method and sanitized JSON; do not share Authorization headers,
+cookies, tokens, client secrets, or an unredacted HAR. OAuth access and historical run association
+must be verified before adding an endpoint. Screenshot values are not API-fetched metrics.
 
 Existing installations now default to read-only. Configure these variables in `.env` or the MCP process environment, then restart the server. Process environment values take precedence over `.env`. `auth_status` reports the effective `safeguard` policy.
 
@@ -29,7 +92,7 @@ This example allows reading objects starting with `SOURCE_` or `HRA` across SAP-
 | Variable | Default | Meaning |
 |---|---|---|
 | `DSP_ALLOW_READ` | `true` | Allow catalog, metadata, OData and CLI reads, including cached data |
-| `DSP_ALLOW_WRITE` | `false` | Allow object create/update, including their automatic deployment |
+| `DSP_ALLOW_WRITE` | `false` | Allow object create/update, including their automatic deployment, and task chain / replication flow control |
 | `DSP_ALLOW_DELETE` | `false` | Independently allow object deletion |
 | `DSP_ALLOWED_WRITE_SPACES` | empty | Exact, case-sensitive Space IDs allowed for both write and delete; comma-separated; empty allows none |
 | `DSP_ALLOW_WRITE_OBJECT_PREFIXES` | empty | Optional case-sensitive prefixes for create/update/delete; comma-separated; empty means no name restriction |
@@ -56,6 +119,8 @@ The CLI bridge accepts `objects <type> list/read/create/update/delete` and `spac
 This is a safeguard for operations through this MCP, not a replacement for SAP permissions. The Space restriction checks the target of the command; it does not analyze dependencies or cross-Space sharing inside object definitions. Direct CLI use outside the MCP is unaffected. Authentication/status and local logout/cache maintenance remain available with reads disabled.
 
 Run `npm test` for the build and offline safeguard checks. No tenant changes are made by these tests.
+
+`scripts/` contains only these tests (`*.test.mjs`, run by `npm test`) and `smoke-cli.ts`, a manual check against a real tenant (`npx tsx scripts/smoke-cli.ts`). Ad-hoc evaluations belong in MCP tools such as `get_space_runs_in_window`, not in scripts.
 
 ## Requirements
 
