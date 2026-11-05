@@ -2,6 +2,14 @@
 
 Interactive Usage OAuth plus **consumption** catalog / analytical / relational OData — and a thin bridge to the official `datasphere` CLI.
 
+## Server-side relational counts
+
+`count_relational_entity` counts rows of an exposed relational consumption entity
+with `$count=true&$top=0`, optionally filtered, without returning data rows or using
+the query cache. Missing counts are unavailable, never zero. It respects current
+user authorizations and the existing read safeguards. Unpublished local tables
+and replication UI Metrics are not supported. See [Counts and limitations](docs/COUNTS.md).
+
 ## CLI surface: exactly two tools
 
 | Tool | Role |
@@ -17,6 +25,7 @@ There is **no** MCP tool per CLI command. Consumption tools (`login_interactive`
 |------|---------------|
 | `get_task_log_history` | `GET /api/v1/datasphere/tasks/logs/<space>/objects/<object>` |
 | `get_task_log` | `GET /api/v1/datasphere/tasks/logs/<space>/<logId>` (`detail`: `status` / `details` / `extended`) |
+| `get_task_log_v2` | `GET /dwaas-core/api/v2/tasks/logs/<space>/<logId>` on `DSP_TENANT_URL`, with SAP extended Accept format; live-tested, not a partition Metrics API |
 | `list_replication_flows` | `GET /api/v1/datasphere/spaces/<space>/replicationflows` |
 | `get_replication_flow_status` | `GET /dwaas-core/api/v1/spaces/<space>/replication-flows/<name>/status` on `DSP_TENANT_URL` (verified with tenant discovery) |
 | `get_replication_flow_run_details` | Extended task log + current flow/dataset status; explicit Delta Records Count availability |

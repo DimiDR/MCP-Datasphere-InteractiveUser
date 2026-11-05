@@ -58,6 +58,8 @@ test("monitoring tools reject disallowed names and unsafe IDs before authenticat
     () => m.getTaskLogHistory("DEV/../X", "SOURCE_CHAIN"),
     () => m.getTaskLogHistory("DEV", "SOURCE_A/../../X"),
     () => m.getTaskLog("DEV", "12a"),
+    () => m.getTaskLogV2("DEV", "12a"),
+    () => m.getTaskLogV2("DEV/../X", "12"),
     () => m.getTaskLog("DEV", "12", "status"),
     () => m.listReplicationFlows("DEV?x=1"),
     () => m.getReplicationFlowStatus("DEV", "PRIVATE_RF"),
@@ -120,6 +122,56 @@ test("replication run details preserve logs, use verified status path and never 
     globalThis.fetch = originalFetch;
     if (originalEnvToken === undefined) delete process.env.DSP_ACCESS_TOKEN;
     else process.env.DSP_ACCESS_TOKEN = originalEnvToken;
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("v2 task logs use extended content negotiation and enforce owner and response identity", async () => {
+  const { config } = await import("../dist/config.js");
+  const m = await import("../dist/monitoring.js");
+  const original = { file: config.tokenFile, policy: config.policy, fetch: globalThis.fetch };
+  const directory = mkdtempSync(join(tmpdir(), "dsp-log-v2-"));
+  config.tokenFile = join(directory, "token.json");
+  writeFileSync(config.tokenFile, JSON.stringify({ access_token: "test", expires_at: Date.now() + 3600000 }));
+  config.policy = restricted;
+  let payload = {
+    logId: 123, spaceId: "DEV", objectId: "SOURCE_RF", status: "COMPLETED",
+    messages: [{ text: "Starting Run" }],
+    children: [{ objectId: "PRIVATE_CHILD" }, { objectId: "SOURCE_CHILD" }],
+    password: "never expose",
+  };
+  let calls = 0;
+  let status = 200;
+  globalThis.fetch = async (url, options) => {
+    calls++;
+    assert.equal(url, `${config.datasphere.tenantUrl}/dwaas-core/api/v2/tasks/logs/DEV/123`);
+    assert.equal(options.method, "GET");
+    assert.equal(options.headers.Accept, m.taskLogDetailLevels.extended);
+    return new Response(JSON.stringify(payload), { status });
+  };
+  try {
+    const result = await m.getTaskLogV2("DEV", "123");
+    assert.equal(result.api_version, "v2");
+    assert.equal(result.log.password, "***");
+    assert.deepEqual(result.log.children, [{ objectId: "SOURCE_CHILD" }]);
+    assert.equal("delta_records_count" in result, false);
+    const valid = payload;
+    for (const invalid of ["COMPLETED", null, [], {}, { objectId: 12 },
+      { ...valid, objectId: "PRIVATE_RF" }, { ...valid, spaceId: "OTHER" }, { ...valid, logId: 999 }]) {
+      payload = invalid;
+      await assert.rejects(() => m.getTaskLogV2("DEV", "123"), /Safeguard:/);
+    }
+    payload = valid;
+    status = 403;
+    await assert.rejects(() => m.getTaskLogV2("DEV", "123"), /Request failed \(403\)/);
+    config.policy = parsePolicy({ DSP_ALLOW_READ: "false" });
+    const previous = calls;
+    await assert.rejects(() => m.getTaskLogV2("DEV", "123"), /DSP_ALLOW_READ/);
+    assert.equal(calls, previous);
+  } finally {
+    config.tokenFile = original.file;
+    config.policy = original.policy;
+    globalThis.fetch = original.fetch;
     rmSync(directory, { recursive: true, force: true });
   }
 });

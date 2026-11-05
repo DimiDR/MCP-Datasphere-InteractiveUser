@@ -106,6 +106,30 @@ export async function getTaskLog(spaceId: string, logId: string, detail: TaskLog
   return { url, space_id: spaceId, log_id: logId, detail, log: checkedTaskLog(config.policy, data) };
 }
 
+/** Separate v2 endpoint advertised by tenant discovery; not the v1 extended Accept format. */
+export async function getTaskLogV2(spaceId: string, logId: string) {
+  assertOperation(config.policy, "read");
+  const path = `/dwaas-core/api/v2/tasks/logs/${segment("space", spaceId)}/${segment("log", logId)}`;
+  const { url, data } = await call(path, { base: tenantBase(), accept: taskLogDetailLevels.extended });
+  if (!data || typeof data !== "object" || Array.isArray(data)
+    || !("objectId" in data) || typeof data.objectId !== "string") {
+    throw new Error("Safeguard: v2 task log has no identifiable owning object.");
+  }
+  assertObjectName(config.policy, data.objectId, "read");
+  if ("spaceId" in data && data.spaceId !== spaceId) {
+    throw new Error("Safeguard: v2 task log Space does not match the requested Space.");
+  }
+  if ("logId" in data && String(data.logId) !== logId) {
+    throw new Error("Safeguard: v2 task log ID does not match the requested log.");
+  }
+  return {
+    url, space_id: spaceId, log_id: logId, api_version: "v2",
+    observed_at: new Date().toISOString(),
+    log: redactSecrets(checkedTaskLog(config.policy, data)),
+    note: "Returns the v2 task log, not inferred UI Metrics. Missing record counts are not zero; runtime and flow counters are not loaded record counts.",
+  };
+}
+
 export async function listReplicationFlows(spaceId: string) {
   assertOperation(config.policy, "read");
   // Path as documented (no hyphen, unlike the status endpoint).

@@ -9,7 +9,7 @@
     "sap-datasphere-interactive-mcp": "dist/index.js"
   },
   "scripts": {
-    "test": "npm run build && node --test scripts/policy.test.mjs scripts/read-policy.test.mjs scripts/monitoring.test.mjs scripts/oauth.test.mjs",
+    "test": "npm run build && node --test scripts/policy.test.mjs scripts/read-policy.test.mjs scripts/monitoring.test.mjs scripts/oauth.test.mjs scripts/counts.test.mjs",
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",

@@ -368,6 +368,59 @@ export async function queryRelationalEntity(options: {
   return { ...result, entity_set: options.entityName };
 }
 
+/** Fresh server-side count; never download rows or substitute a page length for a missing count. */
+export async function countRelationalEntity(options: {
+  spaceId?: string;
+  assetId?: string;
+  entityName: string;
+  filter?: string;
+  timeoutSeconds?: number;
+}) {
+  assertOperation(config.policy, "read");
+  const { spaceId, assetId } = requireSpaceAsset(options.spaceId, options.assetId, config.datasphere);
+  assertObjectName(config.policy, assetId, "read");
+  if (!/^[A-Za-z_][A-Za-z0-9_.]*$/.test(options.entityName)) {
+    throw new Error("Safeguard: invalid entity_name; use an entity set from list_relational_entities.");
+  }
+  const timeout = options.timeoutSeconds ?? 120;
+  if (!Number.isInteger(timeout) || timeout < 1 || timeout > 600) {
+    throw new Error("timeout_seconds must be an integer between 1 and 600.");
+  }
+  const url = new URL(`${config.datasphere.tenantUrl.replace(/\/$/, "")}/api/v1/datasphere/consumption/relational/${encodeURIComponent(spaceId)}/${encodeURIComponent(assetId)}/${encodeURIComponent(options.entityName)}`);
+  url.searchParams.set("$top", "0");
+  url.searchParams.set("$count", "true");
+  if (options.filter) url.searchParams.set("$filter", options.filter);
+  const token = await getValidAccessToken();
+  const res = await dspFetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "Accept-Language": "en" },
+    signal: AbortSignal.timeout(timeout * 1000),
+    redirect: "error",
+  });
+  // Do not echo backend bodies (they can contain data or credentials).
+  if (!res.ok) {
+    await res.body?.cancel();
+    throw new Error(`Relational count failed (${res.status}). The asset must be exposed for relational consumption and accessible to the current user.`);
+  }
+  const data = await res.json() as DspJson;
+  const value = data?.["@odata.count"];
+  let count: number | string | undefined;
+  if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) count = value;
+  else if (typeof value === "string" && /^\d+$/.test(value)) {
+    const integer = BigInt(value);
+    count = integer <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(integer) : integer.toString();
+  }
+  return {
+    space_id: spaceId, asset_id: assetId, entity_name: options.entityName,
+    url: url.toString(), observed_at: new Date().toISOString(),
+    scope: "authorized_relational_entity_after_filter", filter: options.filter ?? null,
+    availability: count === undefined ? "unavailable" : "available",
+    ...(count === undefined
+      ? { reason: "The server did not return a valid exact @odata.count. Missing is not zero; unsafe numeric counts are rejected." }
+      : { count }),
+    cache_hit: false,
+  };
+}
+
 /** Preload metadata/service docs for default or given assets (warms metadata cache). */
 export async function warmCache(options?: {
   spaceId?: string;

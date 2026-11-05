@@ -18,6 +18,7 @@ import {
   testConnection,
 } from "./catalog.js";
 import {
+  countRelationalEntity,
   getAnalyticalFields,
   getAnalyticalServiceDocument,
   listRelationalEntities,
@@ -36,6 +37,7 @@ import {
   getReplicationFlowRunDetails,
   getSpaceRunsInWindow,
   getTaskLog,
+  getTaskLogV2,
   getTaskLogHistory,
   getUser,
   listCertificates,
@@ -422,6 +424,25 @@ server.tool(
   },
 );
 
+server.tool(
+  "count_relational_entity",
+  "Fresh server-side row count of an exposed relational consumption entity using $count=true and $top=0 (no rows downloaded). Optional filter. Respects current user authorizations; not a physical table count unless the entity represents that table. Does not support unpublished local tables or replication Metrics. Missing count is unavailable, never zero. Large exact counts may be returned as decimal strings.",
+  {
+    space_id: z.string().optional(),
+    asset_id: z.string().optional(),
+    entity_name: z.string().describe("Entity set name from list_relational_entities."),
+    filter: z.string().optional(),
+    timeout_seconds: z.number().int().min(1).max(600).optional(),
+  },
+  async ({ space_id, asset_id, entity_name, filter, timeout_seconds }) => {
+    try {
+      return text(await countRelationalEntity({ spaceId: space_id, assetId: asset_id, entityName: entity_name, filter, timeoutSeconds: timeout_seconds }));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
 // ── Monitoring (read-only REST: Tasks API, Replication Flow API) ──────────
 
 server.tool(
@@ -451,6 +472,22 @@ server.tool(
   async ({ space_id, log_id, detail }) => {
     try {
       return text(await getTaskLog(space_id, log_id, detail ?? "details"));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+server.tool(
+  "get_task_log_v2",
+  "Read a task run using the separate GET /dwaas-core/api/v2/tasks/logs/{space}/{logId} endpoint advertised as get-extended in tenant discovery. Not the v1 extended Accept format. Returns actual backend log fields; does not infer loaded records or UI partition Metrics. Missing counts are not zero. Read object restrictions apply to the owning object and child logs.",
+  {
+    space_id: z.string(),
+    log_id: z.union([z.string(), z.number().int().nonnegative().safe()]).transform(String),
+  },
+  async ({ space_id, log_id }) => {
+    try {
+      return text(await getTaskLogV2(space_id, log_id));
     } catch (e) {
       return err(e);
     }
