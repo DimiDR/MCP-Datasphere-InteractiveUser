@@ -108,6 +108,9 @@ export function authorizeCli(policy: Policy, args: string[]): string[] {
   if (!Array.isArray(args) || !args.length || args.some((a) => typeof a !== "string" || !a || a.includes("\0"))) {
     return deny("args must be non-empty CLI string tokens.");
   }
+  if (args[0] === "objects" && ["tables", "table", "dwctable", "dwc_table"].includes(args[1])) {
+    return deny(`'${args[1]}' is not a Datasphere CLI object type. Use list_table_names for all tables, or objects local-tables list and objects remote-tables list with --space and explicit --top/--skip (default page size 25).`);
+  }
   const objects = args[0] === "objects" && objectTypes.has(args[1]);
   const spaces = args[0] === "spaces";
   const action = args[objects ? 2 : 1];

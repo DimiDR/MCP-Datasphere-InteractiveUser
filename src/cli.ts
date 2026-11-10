@@ -14,6 +14,7 @@ import { authorizeCli } from "./policy.js";
 import { clearCache } from "./cache.js";
 import { checkedObjectPayload, snapshotArgs } from "./object-safeguard.js";
 import { checkedCliReadOutput } from "./read-safeguard.js";
+import { inspectCliCache, isCliCacheFailure } from "./cli-cache.js";
 import {
   authStatus,
   getValidAccessToken,
@@ -32,6 +33,7 @@ export type CliRunResult = {
   timed_out?: boolean;
   cache_init_retried?: boolean;
   warnings?: string[];
+  list_page?: { raw_count: number };
 };
 
 export type CliStatus = {
@@ -43,6 +45,7 @@ export type CliStatus = {
   mcp_authenticated: boolean;
   mcp_token_expired: boolean;
   notes: string[];
+  cache: ReturnType<typeof inspectCliCache>;
 };
 
 function redact(text: string): string {
@@ -59,15 +62,6 @@ function truncate(text: string): { text: string; truncated: boolean } {
       `\n… [truncated ${text.length - MAX_OUTPUT_CHARS} chars]`,
     truncated: true,
   };
-}
-
-function looksLikeCacheOutdated(stdout: string, stderr: string): boolean {
-  const blob = `${stdout}\n${stderr}`.toLowerCase();
-  return (
-    blob.includes("local cli cache is outdated") ||
-    blob.includes("cli cache is outdated") ||
-    blob.includes("config cache init")
-  );
 }
 
 function resolveDatasphereEntry(preferred?: string): {
@@ -284,6 +278,14 @@ function packResult(
   },
   extra?: Partial<CliRunResult>,
 ): CliRunResult {
+  let listPage: CliRunResult["list_page"];
+  if (args[0] === "objects" && args[2] === "list" && raw.exitCode === 0 && !raw.timedOut) {
+    try {
+      const parsed = JSON.parse(raw.stdout);
+      const rows = Array.isArray(parsed) ? parsed : parsed?.value;
+      if (Array.isArray(rows)) listPage = { raw_count: rows.length };
+    } catch { /* Non-JSON output is handled by the caller/read safeguard. */ }
+  }
   if (config.policy.readObjectPrefixes.length && args[0] === "objects" && ["list", "read"].includes(args[2])) {
     raw = { ...raw, stdout: raw.exitCode === 0 && !raw.timedOut ? checkedCliReadOutput(config.policy, args, raw.stdout) : "", stderr: raw.exitCode === 0 && !raw.timedOut ? "" : "CLI read failed; backend output hidden by read safeguard." };
   }
@@ -298,6 +300,10 @@ function packResult(
     truncated: out.truncated || errOut.truncated,
     timed_out: raw.timedOut || undefined,
     ...extra,
+    list_page: listPage,
+    warnings: args[0] === "objects" && args[2] === "list"
+      ? [...(extra?.warnings ?? []), "CLI list returns one page only (default --top 25). Use --top/--skip until an empty raw page; for a complete table inventory use list_table_names. 'tables' is not a CLI type: use local-tables and remote-tables."]
+      : extra?.warnings,
   };
 }
 
@@ -375,6 +381,13 @@ function graphicalViewUiModelWarnings(
 
 export async function datasphereCliStatus(): Promise<CliStatus> {
   const notes: string[] = [];
+  const cache = inspectCliCache(config.datasphere.tenantUrl);
+  if (cache.status === "host_differs") {
+    notes.push("CLI cache settings contain a different default host. MCP commands always pass explicit --host and a session secrets file; this difference alone does not prove a routing failure. Cache initialization failures trigger one guarded config cache init retry. The MCP never deletes/moves the global cache.");
+  }
+  if (["missing", "unreadable_or_invalid", "legacy_location_unchecked"].includes(cache.status)) {
+    notes.push("CLI cache settings are missing, invalid or use an unchecked legacy location; cache health cannot be confirmed from settings.");
+  }
   const entry = resolveDatasphereEntry();
   const auth = authStatus();
 
@@ -436,6 +449,7 @@ export async function datasphereCliStatus(): Promise<CliStatus> {
     mcp_authenticated: auth.authenticated,
     mcp_token_expired: auth.expired,
     notes,
+    cache,
   };
 }
 
@@ -484,7 +498,7 @@ export async function datasphereCliRun(options: {
     if (
       !result.timedOut &&
       result.exitCode !== 0 &&
-      looksLikeCacheOutdated(result.stdout, result.stderr)
+      isCliCacheFailure(result.stdout, result.stderr)
     ) {
       cacheInitRetried = true;
       const init = await spawnCli(entry, ["config", "cache", "init"], {

@@ -10,14 +10,59 @@ the query cache. Missing counts are unavailable, never zero. It respects current
 user authorizations and the existing read safeguards. Unpublished local tables
 and replication UI Metrics are not supported. See [Counts and limitations](docs/COUNTS.md).
 
-## CLI surface: exactly two tools
+## Complete technical table inventory
+
+Use **`list_table_names`** first for requests such as “list all technical table
+names”. Unlike the consumption catalog, this inventories design-time tables,
+including tables not exposed for consumption. With no `space_id`, it enumerates
+all accessible Spaces via the official CLI; `table_type` defaults to `all`
+(`local-tables` and `remote-tables`). Existing read safeguards remain enforced.
+
+Backend pages are traversed automatically until an empty raw page, including
+when name restrictions reduce the visible page. Errors, truncated output and
+non-advancing pagination are rejected instead of reported as a complete list.
+The result includes `total_count`, per-Space counts and compact rows containing
+`space_id`, `technical_name` and `type`. Output defaults to 100 names (maximum
+200): **while `has_more` is true, call again with `skip=next_skip`** to get every
+name. `enumeration_complete` means the backend scan completed, not that the
+output page contains every name. Each call scans live; concurrent object changes
+can affect subsequent pages. Views/models are excluded. SAP permissions and
+configured read prefixes limit the scope; this is not a tenant-admin inventory.
+
+The tool needs the installed official CLI and this MCP's OAuth session. It uses
+the existing automatic token refresh; a genuinely missing/invalid session still
+requires `login_interactive`. No credentials or tenant configuration are changed.
+
+After building, restart/reconnect the MCP in your client to load the new tool.
+Read-only live protocol check (uses the configured tenant and current token):
+`npx tsx scripts/smoke-cli.ts --tables` from the project directory.
+
+For generic CLI calls, **`tables` is not an object type**: use `local-tables`
+and `remote-tables`. `objects <type> list` returns **one page**, default 25,
+not all objects. Use explicit `--top` and `--skip`; `list_page.raw_count` records
+the backend page size before read-prefix filtering. An empty visible list alone
+does not prove completion. Prefer `list_table_names` for table inventories.
+
+## CLI surface: exactly two generic runner tools
+
+`datasphere_cli_status` includes a read-only `cache` diagnostic for the default
+`~/.@sap/datasphere-cli/.cache/settings.json`: configured host, saved HTTPS host,
+and matching/missing/invalid status. A different saved default is **not proof**
+that an explicitly scoped command used the wrong tenant. Legacy cache locations
+are reported as unchecked. Secrets are never read from the cache for diagnostics.
+The runner explicitly sets `--host` and its private secrets file. Recognized cache
+errors (including “Failed to initialize the local CLI cache”) trigger one existing
+`config cache init` retry with the same host/session. Initialization can still fail
+due to authentication, permissions, networking or damaged cache; the MCP does
+not automatically delete or move the global cache, which may be shared by other
+sessions. Matching settings alone do not establish discovery-cache health.
 
 | Tool | Role |
 |------|------|
 | `datasphere_cli_status` | Is the CLI installed? Is this MCP logged in? |
 | `datasphere_cli_run` | Run approved object CRUD and Space read/list commands as an argv array |
 
-There is **no** MCP tool per CLI command. Consumption tools (`login_interactive`, `search_catalog`, `query_*`, …) never call the CLI. The only other tool using it internally is `get_space_runs_in_window`, for read-only `objects <type> list` enumeration.
+There is **no** MCP tool per CLI command. Consumption tools (`login_interactive`, `search_catalog`, `query_*`, …) never call the CLI. `list_table_names` and `get_space_runs_in_window` use it internally for read-only enumeration.
 
 ## Monitoring, connection and admin REST tools
 

@@ -28,6 +28,7 @@ import {
 } from "./datasphere.js";
 import { authStatus, clearToken, loginInteractive } from "./oauth.js";
 import { datasphereCliRun, datasphereCliStatus } from "./cli.js";
+import { listTableNames, tableTypes } from "./tables.js";
 import {
   cancelTaskChain,
   controlReplicationFlow,
@@ -753,10 +754,31 @@ server.tool(
   },
 );
 
-// ── Datasphere CLI (exactly two tools) ────────────────────────────────────
+// ── Design-time table inventory ──────────────────────────────────────────
+
+server.tool(
+  "list_table_names",
+  "FIRST CHOICE for listing technical table names in Datasphere, including tables not exposed for consumption. Automatically enumerates local-tables and remote-tables using the guarded official CLI, across all accessible Spaces when space_id is omitted. No separate CLI login or CLI status call needed; token refresh uses this MCP's OAuth session. Returns total_count, per-Space counts and compact rows. Output is paginated: keep calling with next_skip while has_more=true to obtain ALL names; enumeration_complete refers to backend enumeration, not to the returned page. Read-only; SAP permissions and DSP_ALLOW_READ_OBJECT_PREFIXES apply. Failures are errors, never an empty/complete inventory. Views/models are excluded.",
+  {
+    space_id: z.string().optional().describe("Technical Space ID; omit for all accessible Spaces."),
+    table_type: z.enum(["all", ...tableTypes]).optional().describe("Default all: local and remote tables."),
+    top: z.number().int().min(1).max(200).optional().describe("Returned names per page (default 100, maximum 200)."),
+    skip: z.number().int().nonnegative().optional().describe("Output offset; use next_skip from the previous result (default 0)."),
+  },
+  async ({ space_id, table_type, top, skip }) => {
+    try {
+      return text(await listTableNames({ spaceId: space_id, tableType: table_type, top, skip }));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
+
+// ── Datasphere CLI (exactly two generic runner tools) ─────────────────────
 
 server.tool(
   "datasphere_cli_status",
+  "Includes read-only cache settings diagnostics (saved vs configured host; mismatch is a warning, not proof of wrong routing). " +
   "Check whether the official datasphere CLI (@sap/datasphere-cli) is installed and whether this MCP's Interactive Usage token can drive it. ONE OF ONLY TWO CLI tools — there is no MCP tool per CLI command. Use before datasphere_cli_run. Login with login_interactive (not datasphere login).",
   {},
   async () => {
@@ -770,6 +792,7 @@ server.tool(
 
 server.tool(
   "datasphere_cli_run",
+  "For technical table inventories use list_table_names FIRST. Valid CLI table types are local-tables and remote-tables, NOT tables. Object list returns only one page (default --top 25); use explicit --top/--skip and list_page.raw_count to detect the end. " +
   "Run ONE approved official datasphere CLI command via argv. Safeguard: objects <type> list/read/create/update/delete and spaces list/read only; explicit --space required except spaces list. Use long options (or -y for space). DSP_ALLOW_READ/WRITE/DELETE, DSP_ALLOWED_WRITE_SPACES (comma-separated) and optional DSP_ALLOW_WRITE_OBJECT_PREFIXES (e.g. ABZ*,HRA) are enforced before execution. Name restrictions apply to create/update payload definitions and delete technical names; all submitted objects must match. Independent DSP_ALLOW_READ_OBJECT_PREFIXES restrict object reads, lists and consumption queries; write prefixes do not grant read access. With read prefixes, spaces read and custom CLI list select are blocked. ONE OF ONLY TWO CLI tools — pass args as a string array after `datasphere`, e.g. [\"spaces\",\"list\"] or [\"objects\",\"views\",\"create\",\"--space\",\"X\",\"--file-path\",\"view.json\"]. Uses this MCP's Interactive token (temp secrets file); do not pass secrets/login. For rows use query_analytical_model / query_relational_entity. CSN shapes: cli-knowledge/csn-structure/; examples: cli-knowledge/examples/; commands/pitfalls: cli-knowledge/logic/. Graphical views need editorSettings.uiModel or the Data Builder canvas stays empty (tool returns warnings[]). login/logout/config secrets reset are blocked.",
   {
     args: z
