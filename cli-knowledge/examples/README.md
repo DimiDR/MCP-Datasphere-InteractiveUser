@@ -46,7 +46,7 @@ datasphere objects <type> create --space <TARGET> --file-path ./harvested.json
 |---|---|
 | `remote-tables` | Connection-specific remote catalog metadata |
 | `er-models` | Large `editorSettings` diagram payload |
-| `data-flows` / `replication-flows` | `data-flows` root key validated (`dataflows`); full graphs and all of `replication-flows` still clone-from-`read`. Minimal empty DF: [data-flow.json](data-flow.json) |
+| `data-flows` / `replication-flows` | Full flows remain clone-from-`read`. RF root `replicationflows` / kind `sap.dis.replicationflow` verified via CLI read; create/deploy not live-validated. [RF structure and workflow](../csn-structure/F-replication-flow-definition-format.md). Minimal empty DF: [data-flow.json](data-flow.json) |
 | `data-access-controls` | Includes permissions/criteria entity |
 | `business-entities` / `fact-models` / `consumption-models` | Business Builder markers; prefer Analytic Models for new SAC use |
 | `intelligent-lookups` | Input + lookup entity wiring |

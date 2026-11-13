@@ -15,7 +15,7 @@ whether a shape needs a UI harvest.
 | DAC object CSN (`data-access-controls`) | Permissions entity known; full DAC CSN still clone-from-`read` when UI Create works |
 | AM `CalculatedMeasure` formula in the AM itself | Failed guessed shapes; compute in fact view instead ([E.3](appendices/E-object-definition-formats.md#e3-analytic-models)) |
 | Parent-child hierarchy | Only `@Hierarchy.leveled` validated |
-| `replication-flows` root key | Unvalidated |
+| `replication-flows` create/deploy | Root `replicationflows` / kind `sap.dis.replicationflow` verified via CLI read (2026.22.0); create/deploy not live-validated. [Structure](../csn-structure/F-replication-flow-definition-format.md) |
 | TF Aggregation (Σ) CSN | Not harvested — use **projection** or `read` of a UI template |
 
 ## Silent / wrong-but-deployed traps

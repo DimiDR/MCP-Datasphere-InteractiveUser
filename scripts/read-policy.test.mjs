@@ -40,6 +40,15 @@ test("catalog filtering uses technical identifiers, not labels or write permissi
   ]), [{ assetId: "SOURCE_A" }, { id: "HRA_B" }]);
 });
 
+test("replication flow reads accept the harvested root and preserve referenced sources and targets", () => {
+  const command = authorizeCli(policy, ["objects", "replication-flows", "read", "--space", "DEV", "--technical-name", "SOURCE_RF"]);
+  const flow = { kind: "sap.dis.replicationflow", targets: { PRIVATE_TARGET: {} }, connections: { PRIVATE_CONNECTION: {} }, contents: { replicationTasks: [{ targetObject: { name: "PRIVATE_TARGET" } }] } };
+  const payload = { replicationflows: { SOURCE_RF: flow } };
+  assert.deepEqual(JSON.parse(checkedCliReadOutput(policy, command, JSON.stringify(payload))), payload);
+  assert.throws(() => checkedCliReadOutput(policy, command, JSON.stringify({ replicationflows: { SOURCE_RF: flow, PRIVATE_RF: flow } })), /Safeguard:/);
+  assert.throws(() => checkedCliReadOutput(policy, command, '{"definitions":{"SOURCE_RF":{}}}'), /Safeguard:/);
+});
+
 test("consumption names are checked before auth and cache; search filters cached assets", async () => {
   Object.assign(process.env, {
     DSP_ALLOW_READ: "true", DSP_ALLOW_WRITE: "true", DSP_ALLOW_DELETE: "false",

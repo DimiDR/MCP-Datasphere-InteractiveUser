@@ -36,6 +36,7 @@ Login with `login_interactive` (shared Interactive token). Do **not** run a seco
 | Install / OAuth (prefer MCP login) | [`logic/chapters/02-installation-and-authentication.md`](logic/chapters/02-installation-and-authentication.md) |
 | Modeling objects overview | [`logic/chapters/07-modeling-objects.md`](logic/chapters/07-modeling-objects.md) |
 | Object CSN | [`csn-structure/E-object-definition-formats.md`](csn-structure/E-object-definition-formats.md) |
+| Replication flow structure / creation | [`csn-structure/F-replication-flow-definition-format.md`](csn-structure/F-replication-flow-definition-format.md) |
 | Tasks / job-status | [`logic/chapters/08-tasks-job-status.md`](logic/chapters/08-tasks-job-status.md) |
 | Helper scripts | [`logic/scripts/README.md`](logic/scripts/README.md) |
 
