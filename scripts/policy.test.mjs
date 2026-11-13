@@ -44,10 +44,36 @@ test("payload checks all submitted object and auxiliary names, not source refere
     { definitions: { ABZ_VIEW: null } }, { definitions: [] }, { definitions: {} }, [], null,
   ]) assert.throws(() => validateObjectPayload(restricted, JSON.stringify(payload), "views"));
   assert.throws(() => validateObjectPayload(restricted, "not JSON", "views"));
-  for (const [type, root] of [["data-flows", "dataflows"], ["transformation-flows", "transformationflows"], ["task-chains", "taskchains"]]) {
+  for (const [type, root] of [["data-flows", "dataflows"], ["replication-flows", "replicationflows"], ["transformation-flows", "transformationflows"], ["task-chains", "taskchains"]]) {
     validateObjectPayload(restricted, JSON.stringify({ [root]: { ABZ_FLOW: {} } }), type);
     assert.throws(() => validateObjectPayload(restricted, JSON.stringify({ [root]: { PROTECTED: {} } }), type));
   }
+});
+
+test("replication flow create/update checks flow and nested write targets, not source references", () => {
+  const flow = {
+    kind: "sap.dis.replicationflow",
+    contents: {
+      sourceSystem: [{ connectionId: "PROTECTED_CONNECTION" }],
+      replicationTasks: [{ name: "replicationtask1", sourceObject: { name: "/CDS/PROTECTED_SOURCE" }, targetObject: { name: "ABZ_TARGET", metadata: { isNew: true } } }],
+    },
+    sources: {}, targets: { ABZ_TARGET: { elements: { ID: {} } } }, connections: { PROTECTED_CONNECTION: {} },
+  };
+  const raw = (value) => JSON.stringify({ replicationflows: { ABZ_RF: value } });
+  for (const action of ["create", "update"]) {
+    const args = authorizeCli(restricted, ["objects", "replication-flows", action, "--space", "DEV", "--input", raw(flow)]);
+    assert.deepEqual(JSON.parse(checkedObjectPayload(restricted, args, process.cwd())), JSON.parse(raw(flow)));
+    assert.throws(() => authorizeCli(parsePolicy({}), args), /write disabled/);
+    assert.throws(() => authorizeCli(restricted, [...args.slice(0, 4), "PROD", ...args.slice(5)]), /DSP_ALLOWED_WRITE_SPACES/);
+  }
+  for (const invalid of [
+    { ...flow, targets: { PROTECTED_TARGET: {} } },
+    { ...flow, targets: [] },
+    { ...flow, contents: { replicationTasks: [{ targetObject: { name: "PROTECTED_TARGET" } }] } },
+    { ...flow, contents: { replicationTasks: [{ targetObject: {} }] } },
+    { ...flow, contents: { replicationTasks: {} } },
+  ]) assert.throws(() => validateObjectPayload(restricted, raw(invalid), "replication-flows"), /Safeguard:/);
+  assert.throws(() => validateObjectPayload(restricted, '{"definitions":{"ABZ_RF":{}}}', "replication-flows"), /replicationflows/);
 });
 
 test("file and inline payloads are checked and the validated snapshot is preserved", () => {

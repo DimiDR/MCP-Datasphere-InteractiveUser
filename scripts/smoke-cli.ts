@@ -1,6 +1,50 @@
 import { datasphereCliStatus, datasphereCliRun } from "../src/cli.js";
 import { authStatus } from "../src/oauth.js";
 import { getSpaceAssets, testConnection } from "../src/catalog.js";
+import assert from "node:assert/strict";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { fileURLToPath } from "node:url";
+
+/** Exercise the compiled MCP through its real stdio protocol, without tenant mutations. */
+async function smokeTables() {
+  const client = new Client({ name: "table-inventory-smoke", version: "1.0.0" });
+  const transport = new StdioClientTransport({
+    command: process.execPath,
+    args: [fileURLToPath(new URL("../dist/index.js", import.meta.url))],
+    stderr: "pipe",
+  });
+  try {
+    await client.connect(transport);
+    assert.ok((await client.listTools()).tools.some((tool) => tool.name === "list_table_names"));
+    const names = new Set<string>();
+    let skip = 0;
+    let total: number | undefined;
+    do {
+      const response = await client.callTool({ name: "list_table_names", arguments: { skip, top: 200 } }, undefined, { timeout: 600_000 });
+      assert.ok(!response.isError, JSON.stringify(response));
+      const content = response.content as { type: string; text?: string }[];
+      const page = JSON.parse(content.find((item) => item.type === "text")!.text!);
+      assert.equal(page.enumeration_complete, true);
+      if (total !== undefined) assert.equal(page.total_count, total, "Inventory changed during smoke test");
+      total = page.total_count;
+      for (const row of page.value) {
+        const key = `${row.space_id}/${row.type}/${row.technical_name}`;
+        assert.ok(!names.has(key), "Duplicate table across pages");
+        names.add(key);
+      }
+      console.log("TABLE_PAGE", JSON.stringify({ total_count: total, spaces: page.spaces,
+        skip, returned_count: page.returned_count, has_more: page.has_more, next_skip: page.next_skip }));
+      if (!page.has_more) break;
+      assert.ok(page.next_skip > skip);
+      skip = page.next_skip;
+    } while (true);
+    assert.equal(names.size, total);
+    console.log("TABLE_INVENTORY_OK", names.size);
+  } finally {
+    await client.close();
+  }
+}
 
 async function main() {
   console.log("AUTH", JSON.stringify(authStatus()));
@@ -66,7 +110,7 @@ async function main() {
   console.log("ASSETS", JSON.stringify(assets).slice(0, 600));
 }
 
-main().catch((e) => {
+(process.argv.includes("--tables") ? smokeTables() : main()).catch((e) => {
   console.error("FATAL", e);
   process.exit(1);
 });

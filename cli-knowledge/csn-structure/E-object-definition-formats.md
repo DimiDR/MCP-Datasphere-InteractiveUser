@@ -1021,7 +1021,13 @@ Graph: `com.sap.database.table.consumer` → script → `com.sap.database.table.
 `sources` / `targets` empty) is enough for `read`; technical names are
 **case-sensitive** (`Df_Probe` ≠ `DF_PROBE`).
 
-`replication-flows` still unvalidated — start from `read` of an existing one.
+**`replication-flows` root key (verified via CLI `read`, 2026.22.0):**
+`replicationflows` with `kind: "sap.dis.replicationflow"`. The observed flow uses
+`contents.sourceSystem`, `targetSystem`, `vTypes`, `replicationTasks` and dependency
+maps `sources` / `targets` / `connections`, not a transformation-flow graph.
+Create/deploy is not yet live-validated; start from a matching working export.
+Full structure and MCP safeguards:
+[Replication flow definition](F-replication-flow-definition-format.md).
 
 ```bash
 datasphere objects transformation-flows create --space <ID> --file-path ./transformation-flow.json

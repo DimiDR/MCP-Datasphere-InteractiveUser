@@ -69,11 +69,11 @@ export function validateObjectPayload(policy: Policy, raw: string, objectType: s
   const isMap = (value: unknown): value is Record<string, unknown> =>
     value !== null && typeof value === "object" && !Array.isArray(value);
   if (!isMap(payload)) throw new Error("Safeguard: object payload must be a JSON object.");
-  const root = ({ "data-flows": "dataflows", "transformation-flows": "transformationflows", "task-chains": "taskchains" } as Record<string, string>)[objectType] ?? "definitions";
+  const root = ({ "data-flows": "dataflows", "replication-flows": "replicationflows", "transformation-flows": "transformationflows", "task-chains": "taskchains" } as Record<string, string>)[objectType] ?? "definitions";
   if (!isMap(payload[root]) || !Object.keys(payload[root]).length) {
     throw new Error(`Safeguard: cannot determine object names; non-empty '${root}' required.`);
   }
-  const namedSections = new Set(["definitions", "dataflows", "transformationflows", "taskchains", "businessLayerDefinitions", "editorSettings", "sharing"]);
+  const namedSections = new Set(["definitions", "dataflows", "replicationflows", "transformationflows", "taskchains", "businessLayerDefinitions", "editorSettings", "sharing"]);
   for (const [section, value] of Object.entries(payload)) {
     if (["$version", "version", "meta"].includes(section)) continue;
     if (!namedSections.has(section) || !isMap(value)) {
@@ -82,6 +82,24 @@ export function validateObjectPayload(policy: Policy, raw: string, objectType: s
     for (const [name, definition] of Object.entries(value)) {
       assertObjectName(policy, name, operation);
       if (!isMap(definition)) throw new Error(`Safeguard: invalid definition for '${name}'.`);
+      // Replication flows can create/write target tables inside the flow payload.
+      // Reads may expose references to existing targets outside the read prefix.
+      if (section === "replicationflows" && operation === "write") {
+        if (definition.targets !== undefined) {
+          if (!isMap(definition.targets)) throw new Error(`Safeguard: invalid replication targets for '${name}'.`);
+          for (const target of Object.keys(definition.targets)) assertObjectName(policy, target, operation);
+        }
+        const tasks = isMap(definition.contents) ? definition.contents.replicationTasks : undefined;
+        if (tasks !== undefined) {
+          if (!Array.isArray(tasks)) throw new Error(`Safeguard: invalid replication tasks for '${name}'.`);
+          for (const task of tasks) {
+            if (!isMap(task) || !isMap(task.targetObject) || typeof task.targetObject.name !== "string") {
+              throw new Error(`Safeguard: cannot determine replication target for '${name}'.`);
+            }
+            assertObjectName(policy, task.targetObject.name, operation);
+          }
+        }
+      }
     }
   }
   // Serialize the exact parsed representation checked above, including duplicate-key normalization.
@@ -107,6 +125,9 @@ export function authorizeCli(policy: Policy, args: string[]): string[] {
   const deny = (message: string): never => { throw new Error(`Safeguard: ${message}`); };
   if (!Array.isArray(args) || !args.length || args.some((a) => typeof a !== "string" || !a || a.includes("\0"))) {
     return deny("args must be non-empty CLI string tokens.");
+  }
+  if (args[0] === "objects" && ["tables", "table", "dwctable", "dwc_table"].includes(args[1])) {
+    return deny(`'${args[1]}' is not a Datasphere CLI object type. Use list_table_names for all tables, or objects local-tables list and objects remote-tables list with --space and explicit --top/--skip (default page size 25).`);
   }
   const objects = args[0] === "objects" && objectTypes.has(args[1]);
   const spaces = args[0] === "spaces";
