@@ -126,6 +126,54 @@ test("replication run details preserve logs, use verified status path and never 
   }
 });
 
+test("replication flow listing uses the discovered v1 tenant path and preserves read safeguards", async () => {
+  const { config } = await import("../dist/config.js");
+  const m = await import("../dist/monitoring.js");
+  const directory = mkdtempSync(join(tmpdir(), "dsp-rf-list-"));
+  const original = {
+    file: config.tokenFile, policy: config.policy, fetch: globalThis.fetch,
+    tenantUrl: config.datasphere.tenantUrl, apiUrl: config.datasphere.apiUrl,
+    envToken: process.env.DSP_ACCESS_TOKEN,
+  };
+  config.tokenFile = join(directory, "token.json");
+  process.env.DSP_ACCESS_TOKEN = "";
+  writeFileSync(config.tokenFile, JSON.stringify({ access_token: "test", expires_at: Date.now() + 3600000 }));
+  config.policy = restricted;
+  config.datasphere.tenantUrl = "https://tenant.example.invalid/";
+  config.datasphere.apiUrl = "https://api.example.invalid";
+  const expectedUrl = "https://tenant.example.invalid/dwaas-core/api/v1/spaces/DEV/replicationflows";
+  let calls = 0;
+  let status = 200;
+  try {
+    globalThis.fetch = async (url, options) => {
+      calls++;
+      assert.equal(url, expectedUrl);
+      assert.equal(options.method, "GET");
+      assert.equal(options.headers.Accept, "application/json");
+      return new Response(JSON.stringify([{ technicalName: "SOURCE_RF" }, { technicalName: "PRIVATE_RF" }]), { status });
+    };
+    const result = await m.listReplicationFlows("DEV");
+    assert.equal(result.url, expectedUrl);
+    assert.equal(result.space_id, "DEV");
+    assert.deepEqual(result.replication_flows, [{ technicalName: "SOURCE_RF" }]);
+    status = 404;
+    await assert.rejects(() => m.listReplicationFlows("DEV"), /Request failed \(404\)/);
+    await assert.rejects(() => m.listReplicationFlows("DEV/../OTHER"), /Safeguard:/);
+    config.policy = parsePolicy({ DSP_ALLOW_READ: "false" });
+    await assert.rejects(() => m.listReplicationFlows("DEV"), /DSP_ALLOW_READ/);
+    assert.equal(calls, 2);
+  } finally {
+    config.tokenFile = original.file;
+    config.policy = original.policy;
+    config.datasphere.tenantUrl = original.tenantUrl;
+    config.datasphere.apiUrl = original.apiUrl;
+    globalThis.fetch = original.fetch;
+    if (original.envToken === undefined) delete process.env.DSP_ACCESS_TOKEN;
+    else process.env.DSP_ACCESS_TOKEN = original.envToken;
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test("v2 task logs use extended content negotiation and enforce owner and response identity", async () => {
   const { config } = await import("../dist/config.js");
   const m = await import("../dist/monitoring.js");

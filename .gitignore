@@ -12,3 +12,5 @@ env-files/
 
 # Local evaluation output (may contain tenant data)
 /monitoring-*
+
+/Datasphere_CLI

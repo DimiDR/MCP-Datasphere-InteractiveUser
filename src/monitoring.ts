@@ -132,8 +132,11 @@ export async function getTaskLogV2(spaceId: string, logId: string) {
 
 export async function listReplicationFlows(spaceId: string) {
   assertOperation(config.policy, "read");
-  // Path as documented (no hyphen, unlike the status endpoint).
-  const { url, data } = await call(`/api/v1/datasphere/spaces/${segment("space", spaceId)}/replicationflows`);
+  // Tenant discovery advertises the design-time list on v1 (no hyphen).
+  const { url, data } = await call(
+    `/dwaas-core/api/v1/spaces/${segment("space", spaceId)}/replicationflows`,
+    { base: tenantBase() },
+  );
   return { url, space_id: spaceId, replication_flows: filterNamedList(config.policy, data, "replication flow") };
 }
 
