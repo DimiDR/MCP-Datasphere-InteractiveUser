@@ -29,6 +29,7 @@ import {
 import { authStatus, clearToken, loginInteractive } from "./oauth.js";
 import { datasphereCliRun, datasphereCliStatus } from "./cli.js";
 import { listTableNames, tableTypes } from "./tables.js";
+import { prepareObjectCopy, transformObjectTypes } from "./object-transform.js";
 import {
   cancelTaskChain,
   controlReplicationFlow,
@@ -774,7 +775,41 @@ server.tool(
   },
 );
 
-// ── Datasphere CLI (exactly two generic runner tools) ─────────────────────
+// ── CLI bridge (exactly two generic runner tools) ─────────────────────
+
+server.tool(
+  "prepare_object_copy",
+  "Locally prepare a deterministic local-table or replication-flow copy/update from a previously read JSON export. No tenant reads/writes or file writes. " +
+  "Uses path-scoped sequential replacements, collision checks and metadata-preserving folder actions. Returns payload, exact changes and path match counts. " +
+  "Folder IDs are technical IDs, not display paths; tenant persistence/removal is NOT verified. Explicit target_tables use transformed names and only affect definitions in this payload. " +
+  "Missing optional profile paths warn; strict_paths rejects any unmatched configured path. Write name prefixes are checked, but write permission/Space and SAP validation are checked only when executing via datasphere_cli_run. " +
+  "Read source exports with the guarded CLI first; then review the prepared payload and use the existing runner for explicitly requested create/update operations.",
+  {
+    payload: z.string().describe("JSON object export, not a CLI save/deploy message."),
+    object_type: z.enum(transformObjectTypes),
+    source_name: z.string().min(1),
+    replacements: z.array(z.object({ search: z.string().min(1), replacement: z.string() })),
+    rename_key_paths: z.array(z.string()).optional(),
+    replace_value_paths: z.array(z.string()).optional(),
+    strict_paths: z.boolean().optional(),
+    folder: z.object({
+      action: z.enum(["preserve", "assign", "remove"]),
+      id: z.string().optional(),
+      target_tables: z.array(z.string().min(1)).optional(),
+    }).optional(),
+  },
+  async ({ payload, object_type, source_name, replacements, rename_key_paths, replace_value_paths, strict_paths, folder }) => {
+    try {
+      return text(prepareObjectCopy({
+        payload, objectType: object_type, sourceName: source_name, replacements,
+        renameKeyPaths: rename_key_paths, replaceValuePaths: replace_value_paths, strictPaths: strict_paths,
+        folder: folder && { action: folder.action, id: folder.id, targetTables: folder.target_tables },
+      }, config.policy));
+    } catch (e) {
+      return err(e);
+    }
+  },
+);
 
 server.tool(
   "datasphere_cli_status",

@@ -43,6 +43,23 @@ not all objects. Use explicit `--top` and `--skip`; `list_page.raw_count` record
 the backend page size before read-prefix filtering. An empty visible list alone
 does not prove completion. Prefer `list_table_names` for table inventories.
 
+## Deterministic object preparation and folders
+
+`prepare_object_copy` prepares local tables and replication flows from an existing
+JSON export without file writes, tenant access or separate CLI login. It returns
+the transformed `payload`, explicit source/target names, exact changes and match
+counts for each configured path. Default profiles use self-contained, targeted
+replacement rules, not global JSON text replacement. Folder metadata is
+preserved except for the explicitly requested assignment/removal; flow target
+tables are changed only when listed explicitly.
+
+Folder assignment is **not verified tenant functionality**: a successful CLI save
+does not prove persistence. See [Object preparation and folder limitations](docs/OBJECT_PREPARATION.md)
+for the workflow, input example, read-only verification findings and safety boundaries.
+A general copy-into-existing-folder operation is not yet implemented: no working
+folder assignment mechanism has been verified. Restart/reconnect the MCP
+after building to expose the new tool.
+
 ## CLI surface: exactly two generic runner tools
 
 `datasphere_cli_status` includes a read-only `cache` diagnostic for the default
@@ -71,7 +88,7 @@ There is **no** MCP tool per CLI command. Consumption tools (`login_interactive`
 | `get_task_log_history` | `GET /api/v1/datasphere/tasks/logs/<space>/objects/<object>` |
 | `get_task_log` | `GET /api/v1/datasphere/tasks/logs/<space>/<logId>` (`detail`: `status` / `details` / `extended`) |
 | `get_task_log_v2` | `GET /dwaas-core/api/v2/tasks/logs/<space>/<logId>` on `DSP_TENANT_URL`, with SAP extended Accept format; live-tested, not a partition Metrics API |
-| `list_replication_flows` | `GET /api/v1/datasphere/spaces/<space>/replicationflows` |
+| `list_replication_flows` | `GET /dwaas-core/api/v1/spaces/<space>/replicationflows` on `DSP_TENANT_URL` (verified with tenant discovery) |
 | `get_replication_flow_status` | `GET /dwaas-core/api/v1/spaces/<space>/replication-flows/<name>/status` on `DSP_TENANT_URL` (verified with tenant discovery) |
 | `get_replication_flow_run_details` | Extended task log + current flow/dataset status; explicit Delta Records Count availability |
 | `get_space_runs_in_window` | All runs of a Space in a time window (aggregates the task log endpoints above, see below) |
