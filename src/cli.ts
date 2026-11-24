@@ -21,7 +21,7 @@ import {
   loadToken,
 } from "./oauth.js";
 
-const MAX_OUTPUT_CHARS = 200_000;
+const MAX_OUTPUT_CHARS = 2_000_000;
 
 export type CliRunResult = {
   ok: boolean;
