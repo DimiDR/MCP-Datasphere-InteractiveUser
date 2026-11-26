@@ -8,9 +8,13 @@ dist/
 *.log
 .DS_Store
 
+# Ordner für temporäre env Dateien
 env-files/
+
+.claude/
 
 # Local evaluation output (may contain tenant data)
 /monitoring-*
 
 /Datasphere_CLI
+
