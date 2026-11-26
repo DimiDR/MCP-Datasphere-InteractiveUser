@@ -291,13 +291,13 @@ export const replicationFlowActions = ["start", "pause", "resume", "stop"] as co
 export const replicationObjectActions = ["pause-object", "resume-object", "restart-object"] as const;
 
 const replicationFlowPath = (spaceId: string, flow: string) =>
-  `/api/v1/datasphere/spaces/${segment("space", spaceId)}/replication-flows/${segment("object", flow)}`;
+  `/dwaas-core/api/v1/spaces/${segment("space", spaceId)}/replication-flows/${segment("object", flow)}`;
 
 export async function controlReplicationFlow(spaceId: string, flow: string, action: typeof replicationFlowActions[number]) {
   if (!replicationFlowActions.includes(action)) throw new Error(`Safeguard: unsupported replication flow action '${action}'.`);
   assertControl(spaceId, flow);
   const base = replicationFlowPath(spaceId, flow);
-  const { url, data } = await call(`${base}/${action}`, { method: "POST", csrfFrom: `${base}/status` });
+  const { url, data } = await call(`${base}/${action}`, { method: "POST", csrfFrom: `${base}/status`, base: tenantBase() });
   return { url, space_id: spaceId, technical_name: flow, action, result: data };
 }
 
@@ -311,7 +311,7 @@ export async function controlReplicationFlowObject(
   assertControl(spaceId, flow);
   const base = replicationFlowPath(spaceId, flow);
   const { url, data } = await call(`${base}/objects/${segment("object", objectName)}/${action}`, {
-    method: "POST", csrfFrom: `${base}/status`,
+    method: "POST", csrfFrom: `${base}/status`, base: tenantBase(),
   });
   return { url, space_id: spaceId, technical_name: flow, object: objectName, action, result: data };
 }

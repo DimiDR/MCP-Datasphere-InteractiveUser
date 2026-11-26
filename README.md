@@ -106,8 +106,8 @@ Write-gated control tools (same gate as object create/update: `DSP_ALLOW_WRITE=t
 | `run_task_chain` | `POST /api/v1/datasphere/tasks/chains/<space>/run/<chain>` (optional `inputParameters`) |
 | `retry_task_chain` | `POST /api/v1/datasphere/tasks/chains/<space>/retry/<chain>` |
 | `cancel_task_chain` | `POST /api/v1/datasphere/tasks/chains/<space>/cancel/<logId>` (owning chain is resolved first when write prefixes are set) |
-| `control_replication_flow` | `POST /api/v1/datasphere/spaces/<space>/replication-flows/<name>/<start\|pause\|resume\|stop>` |
-| `control_replication_flow_object` | `POST …/replication-flows/<name>/objects/<object>/<pause-object\|resume-object\|restart-object>` |
+| `control_replication_flow` | `POST /dwaas-core/api/v1/spaces/<space>/replication-flows/<name>/<start\|pause\|resume\|stop>` on `DSP_TENANT_URL` |
+| `control_replication_flow_object` | `POST …/replication-flows/<name>/objects/<object>/<pause-object\|resume-object\|restart-object>` on `DSP_TENANT_URL` |
 
 Control calls fetch an `x-csrf-token` (with session cookies) from a GET on the same API first. SAP additionally requires Data Warehouse Data Integration (`--U-----`) and, for Interactive Usage, authorized consent. Connection create/edit/delete, certificate upload/delete and SCIM user changes are not exposed.
 
